@@ -338,7 +338,7 @@ impl Parser {
           iter_state = State::Normal;
         }
         State::Sub => {
-          if val == SE {
+          if val == SE && index > 1 && self.buffer[index-1] == IAC {
             let opt = &self.buffer[cmd_begin + 2];
             if *opt == telnet::op_option::MCCP2 || *opt == telnet::op_option::MCCP3 {
               // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
