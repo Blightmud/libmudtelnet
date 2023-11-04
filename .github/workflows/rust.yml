@@ -27,7 +27,7 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-      - run: cargo clippy --all-features -- --deny warnings
+      - run: cargo clippy --locked --all-features -- --deny warnings
 
   clippy-nightly:
     name: Clippy (Nightly)
@@ -39,7 +39,7 @@ jobs:
         uses: dtolnay/rust-toolchain@nightly
         with:
           components: clippy
-      - run: cargo clippy --all-features -- --deny warnings
+      - run: cargo clippy --locked --all-features -- --deny warnings
 
   docs:
     name: Check for documentation errors
@@ -50,7 +50,7 @@ jobs:
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@nightly
       - name: cargo doc
-        run: cargo doc --all-features --no-deps --document-private-items
+        run: cargo doc --locked --all-features --no-deps --document-private-items
         env:
           RUSTDOCFLAGS: -Dwarnings
 
@@ -62,13 +62,13 @@ jobs:
     - name: Install stable rust toolchain
       uses: dtolnay/rust-toolchain@stable
     - name: Build (default features)
-      run: cargo build --verbose
+      run: cargo build --locked --verbose
     - name: Run tests (default features)
-      run: cargo test --verbose
+      run: cargo test --locked --verbose
     - name: Build (no default features)
-      run: cargo build --verbose --no-default-features
+      run: cargo build --locked --verbose --no-default-features
     - name: Run tests (no default features)
-      run: cargo test --verbose --no-default-features
+      run: cargo test --locked --verbose --no-default-features
 
   nightly:
     name: Nightly Rust
@@ -78,10 +78,10 @@ jobs:
       - name: Install nightly rust toolchain
         uses: dtolnay/rust-toolchain@nightly
       - name: Build (default features)
-        run: cargo build --verbose
+        run: cargo build --locked --verbose
       - name: Run tests (default features)
-        run: cargo test --verbose
+        run: cargo test --locked --verbose
       - name: Build (no default features)
-        run: cargo build --verbose --no-default-features
+        run: cargo build --locked --verbose --no-default-features
       - name: Run tests (no default features)
-        run: cargo test --verbose --no-default-features
+        run: cargo test --locked --verbose --no-default-features
