@@ -12,7 +12,7 @@ pub struct CompatibilityEntry {
 }
 
 impl CompatibilityEntry {
-  pub fn new(local: bool, remote: bool, local_state: bool, remote_state: bool) -> Self {
+  #[must_use] pub fn new(local: bool, remote: bool, local_state: bool, remote_state: bool) -> Self {
     Self {
       local,
       remote,
@@ -21,7 +21,7 @@ impl CompatibilityEntry {
     }
   }
   /// Creates a u8 bitmask from this entry.
-  pub fn into_u8(self) -> u8 {
+  #[must_use] pub fn into_u8(self) -> u8 {
     let mut res: u8 = 0;
     if self.local {
       res |= CompatibilityTable::ENABLED_LOCAL;
@@ -37,8 +37,8 @@ impl CompatibilityEntry {
     }
     res
   }
-  /// Expands a u8 bitmask into a CompatibilityEntry.
-  pub fn from(value: u8) -> Self {
+  /// Expands a u8 bitmask into a `CompatibilityEntry`.
+  #[must_use] pub fn from(value: u8) -> Self {
     Self {
       local: value & CompatibilityTable::ENABLED_LOCAL == CompatibilityTable::ENABLED_LOCAL,
       remote: value & CompatibilityTable::ENABLED_REMOTE == CompatibilityTable::ENABLED_REMOTE,
@@ -69,7 +69,7 @@ impl CompatibilityTable {
   pub const LOCAL_STATE: u8 = 1 << 2;
   /// Option is currently enabled remotely.
   pub const REMOTE_STATE: u8 = 1 << 3;
-  pub fn new() -> Self {
+  #[must_use] pub fn new() -> Self {
     Self::default()
   }
   /// Create a table with some option values set.
@@ -81,7 +81,7 @@ impl CompatibilityTable {
   /// # Notes
   ///
   /// An option bitmask can be generated using the `CompatibilityEntry` struct, using `entry.into_u8()`.
-  pub fn from_options(values: &[(u8, u8)]) -> Self {
+  #[must_use] pub fn from_options(values: &[(u8, u8)]) -> Self {
     let mut options: [u8; 256] = [0; 256];
     for (opt, val) in values {
       options[*opt as usize] = *val;
@@ -108,7 +108,7 @@ impl CompatibilityTable {
     self.set_option(option, opt);
   }
   /// Retrieve a `CompatbilityEntry` generated from the current state of the option value.
-  pub fn get_option(&self, option: u8) -> CompatibilityEntry {
+  #[must_use] pub fn get_option(&self, option: u8) -> CompatibilityEntry {
     CompatibilityEntry::from(self.options[option as usize])
   }
   /// Set an option value by getting the bitmask from a `CompatibilityEntry`.
@@ -118,7 +118,7 @@ impl CompatibilityTable {
 
   /// Reset all negotiated states
   pub fn reset_states(&mut self) {
-    for opt in self.options.iter_mut() {
+    for opt in &mut self.options {
       let mut entry = CompatibilityEntry::from(*opt);
       entry.local_state = false;
       entry.remote_state = false;

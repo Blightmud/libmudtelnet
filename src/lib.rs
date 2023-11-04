@@ -1,4 +1,5 @@
 #![cfg_attr(not(feature = "std"), no_std)]
+#![warn(clippy::pedantic)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
@@ -12,10 +13,10 @@ pub mod telnet;
 use alloc::{format, vec::Vec};
 pub use bytes;
 
-use crate::telnet::op_command::*;
+use crate::telnet::op_command::{DO, DONT, EOR, GA, IAC, NOP, SB, SE, WILL, WONT};
 
 use bytes::{BufMut, Bytes, BytesMut};
-use compatibility::*;
+use compatibility::CompatibilityTable;
 
 pub enum EventType {
   None(Bytes),
@@ -49,27 +50,27 @@ impl Default for Parser {
 
 impl Parser {
   /// Create a default, empty Parser with an internal buffer capacity of 128 bytes.
-  pub fn new() -> Self {
+  #[must_use] pub fn new() -> Self {
     Self::default()
   }
   /// Create an empty parser, setting the initial internal buffer capcity.
-  pub fn with_capacity(size: usize) -> Self {
+  #[must_use] pub fn with_capacity(size: usize) -> Self {
     Self {
       options: CompatibilityTable::new(),
       buffer: BytesMut::with_capacity(size),
     }
   }
-  /// Create an parser, setting the initial internal buffer capacity and directly supplying a CompatibilityTable.
-  pub fn with_support_and_capacity(size: usize, table: CompatibilityTable) -> Self {
+  /// Create an parser, setting the initial internal buffer capacity and directly supplying a `CompatibilityTable`.
+  #[must_use] pub fn with_support_and_capacity(size: usize, table: CompatibilityTable) -> Self {
     Self {
       options: table,
       buffer: BytesMut::with_capacity(size),
     }
   }
-  /// Create a parser, directly supplying a CompatibilityTable.
+  /// Create a parser, directly supplying a `CompatibilityTable`.
   ///
   /// Uses the default initial buffer capacity of 128 bytes.
-  pub fn with_support(table: CompatibilityTable) -> Self {
+  #[must_use] pub fn with_support(table: CompatibilityTable) -> Self {
     Self {
       options: table,
       buffer: BytesMut::with_capacity(128),
@@ -104,7 +105,7 @@ impl Parser {
   {
     let data = Bytes::from(data);
     let mut t = BytesMut::with_capacity(data.len());
-    for byte in data.iter() {
+    for byte in &data {
       t.put_u8(*byte);
       if *byte == 255 {
         t.put_u8(255);
@@ -123,7 +124,7 @@ impl Parser {
     let data = Bytes::from(data);
     let mut t = BytesMut::with_capacity(data.len());
     let mut last = 0u8;
-    for val in data.iter() {
+    for val in &data {
       if *val == 255 && last == 255 {
         continue;
       }
@@ -142,7 +143,7 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `events::TelnetEvents::DataSend` - A DataSend event to be processed.
+  /// `events::TelnetEvents::DataSend` - A `DataSend` event to be processed.
   ///
   /// # Usage
   ///
@@ -160,7 +161,7 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `Option<events::TelnetEvents::DataSend>` - The DataSend event to be processed, or None if not supported.
+  /// `Option<events::TelnetEvents::DataSend>` - The `DataSend` event to be processed, or None if not supported.
   ///
   /// # Notes
   ///
@@ -183,7 +184,7 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `Option<events::TelnetEvents::DataSend>` - A DataSend event to be processed, or None if the option is already disabled.
+  /// `Option<events::TelnetEvents::DataSend>` - A `DataSend` event to be processed, or None if the option is already disabled.
   ///
   pub fn _wont(&mut self, option: u8) -> Option<events::TelnetEvents> {
     let mut opt = self.options.get_option(option);
@@ -203,7 +204,7 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `Option<events::TelnetEvents::DataSend>` - A DataSend event to be processed, or None if the option is not supported or already enabled.
+  /// `Option<events::TelnetEvents::DataSend>` - A `DataSend` event to be processed, or None if the option is not supported or already enabled.
   ///
   /// # Notes
   ///
@@ -224,7 +225,7 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `Option<events::TelnetEvents::DataSend>` - A DataSend event to be processed, or None if the option is already disabled.
+  /// `Option<events::TelnetEvents::DataSend>` - A `DataSend` event to be processed, or None if the option is already disabled.
   ///
   pub fn _dont(&mut self, option: u8) -> Option<events::TelnetEvents> {
     let opt = self.options.get_option(option);
@@ -244,7 +245,7 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `Option<events::TelnetEvents::DataSend>` - A DataSend event to be processed, or None if the option is not supported or is currently disabled.
+  /// `Option<events::TelnetEvents::DataSend>` - A `DataSend` event to be processed, or None if the option is not supported or is currently disabled.
   ///
   /// # Notes
   ///
@@ -272,7 +273,7 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `Option<events::TelnetEvents::DataSend>` - A DataSend event to be processed, or None if the option is not supported or is currently disabled.
+  /// `Option<events::TelnetEvents::DataSend>` - A `DataSend` event to be processed, or None if the option is not supported or is currently disabled.
   ///
   /// # Notes
   ///
@@ -284,14 +285,14 @@ impl Parser {
   ///
   /// # Returns
   ///
-  /// `events::TelnetEvents::DataSend` - A DataSend event to be processed.
+  /// `events::TelnetEvents::DataSend` - A `DataSend` event to be processed.
   ///
   /// # Notes
   ///
   /// The string will have IAC (255) bytes escaped before being sent.
   pub fn send_text(&mut self, text: &str) -> events::TelnetEvents {
     events::TelnetEvents::build_send(Bytes::copy_from_slice(&Parser::escape_iac(
-      format!("{}\r\n", text).into_bytes(),
+      format!("{text}\r\n").into_bytes(),
     )))
   }
 
@@ -324,7 +325,7 @@ impl Parser {
           match val {
             IAC => iter_state = State::Normal, // Double IAC, ignore
             GA | EOR | NOP => {
-              events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..index + 1])));
+              events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..=index])));
               cmd_begin = index + 1;
               iter_state = State::Normal;
             }
@@ -333,7 +334,7 @@ impl Parser {
           }
         }
         State::Neg => {
-          events.push(EventType::Neg(vbytes!(&self.buffer[cmd_begin..index + 1])));
+          events.push(EventType::Neg(vbytes!(&self.buffer[cmd_begin..=index])));
           cmd_begin = index + 1;
           iter_state = State::Normal;
         }
@@ -343,14 +344,14 @@ impl Parser {
             if *opt == telnet::op_option::MCCP2 || *opt == telnet::op_option::MCCP3 {
               // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
               events.push(EventType::SubNegotiation(
-                vbytes!(&self.buffer[cmd_begin..index + 1]),
+                vbytes!(&self.buffer[cmd_begin..=index]),
                 Some(vbytes!(&self.buffer[index + 1..])),
               ));
               cmd_begin = self.buffer.len();
               break;
             } else {
               events.push(EventType::SubNegotiation(
-                vbytes!(&self.buffer[cmd_begin..index + 1]),
+                vbytes!(&self.buffer[cmd_begin..=index]),
                 None,
               ));
               cmd_begin = index + 1;
