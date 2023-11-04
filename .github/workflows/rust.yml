@@ -5,17 +5,46 @@ on:
   pull_request:
 
 jobs:
-  build:
-
+  format:
+    name: Format
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
+      - uses: actions/checkout@v4
+      - name: Install rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+
+  stable:
+    name: Stable Rust
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install stable rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+    - name: Build (default features)
       run: cargo build --verbose
-    - name: Run tests
+    - name: Run tests (default features)
       run: cargo test --verbose
-    - name: Build
+    - name: Build (no default features)
       run: cargo build --verbose --no-default-features
-    - name: Run tests
+    - name: Run tests (no default features)
       run: cargo test --verbose --no-default-features
+
+  nightly:
+    name: Nightly Rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install nightly rust toolchain
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Build (default features)
+        run: cargo build --verbose
+      - name: Run tests (default features)
+        run: cargo test --verbose
+      - name: Build (no default features)
+        run: cargo build --verbose --no-default-features
+      - name: Run tests (no default features)
+        run: cargo test --verbose --no-default-features
