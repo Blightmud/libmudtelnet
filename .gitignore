@@ -3,3 +3,5 @@ Cargo.lock
 /.vimrc
 /.idea
 /.vscode
+/result
+/.direnv
