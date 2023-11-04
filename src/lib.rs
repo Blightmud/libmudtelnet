@@ -50,18 +50,21 @@ impl Default for Parser {
 
 impl Parser {
   /// Create a default, empty Parser with an internal buffer capacity of 128 bytes.
-  #[must_use] pub fn new() -> Self {
+  #[must_use]
+  pub fn new() -> Self {
     Self::default()
   }
   /// Create an empty parser, setting the initial internal buffer capcity.
-  #[must_use] pub fn with_capacity(size: usize) -> Self {
+  #[must_use]
+  pub fn with_capacity(size: usize) -> Self {
     Self {
       options: CompatibilityTable::new(),
       buffer: BytesMut::with_capacity(size),
     }
   }
   /// Create an parser, setting the initial internal buffer capacity and directly supplying a `CompatibilityTable`.
-  #[must_use] pub fn with_support_and_capacity(size: usize, table: CompatibilityTable) -> Self {
+  #[must_use]
+  pub fn with_support_and_capacity(size: usize, table: CompatibilityTable) -> Self {
     Self {
       options: table,
       buffer: BytesMut::with_capacity(size),
@@ -70,7 +73,8 @@ impl Parser {
   /// Create a parser, directly supplying a `CompatibilityTable`.
   ///
   /// Uses the default initial buffer capacity of 128 bytes.
-  #[must_use] pub fn with_support(table: CompatibilityTable) -> Self {
+  #[must_use]
+  pub fn with_support(table: CompatibilityTable) -> Self {
     Self {
       options: table,
       buffer: BytesMut::with_capacity(128),
@@ -349,14 +353,13 @@ impl Parser {
               ));
               cmd_begin = self.buffer.len();
               break;
-            } else {
-              events.push(EventType::SubNegotiation(
-                vbytes!(&self.buffer[cmd_begin..=index]),
-                None,
-              ));
-              cmd_begin = index + 1;
-              iter_state = State::Normal;
             }
+            events.push(EventType::SubNegotiation(
+              vbytes!(&self.buffer[cmd_begin..=index]),
+              None,
+            ));
+            cmd_begin = index + 1;
+            iter_state = State::Normal;
           }
         }
       }
