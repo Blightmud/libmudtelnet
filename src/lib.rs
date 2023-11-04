@@ -466,9 +466,9 @@ impl Parser {
             // Valid ending
             let opt = self.options.get_option(buffer[2]);
             if opt.local && opt.local_state && len - 2 >= 3 {
-              let dbuffer = vbytes!(&buffer[3..len - 2]);
               event_list.push(events::TelnetEvents::build_subnegotiation(
-                buffer[2], dbuffer,
+                buffer[2],
+                vbytes!(&buffer[3..len - 2]),
               ));
               if let Some(rbuf) = remaining {
                 event_list.push(events::TelnetEvents::DecompressImmediate(rbuf));
