@@ -113,7 +113,7 @@ impl CompatibilityTable {
   }
   /// Set an option value by getting the bitmask from a `CompatibilityEntry`.
   pub fn set_option(&mut self, option: u8, entry: CompatibilityEntry) {
-    self.options[option as usize] = entry.clone().into_u8();
+    self.options[option as usize] = entry.into_u8();
   }
 
   /// Reset all negotiated states
@@ -135,16 +135,16 @@ mod test_compat {
   fn test_reset() {
     let mut table = CompatibilityTable::default();
     let entry = CompatibilityEntry::new(true, true, true, true);
-    assert_eq!(entry.remote, true);
-    assert_eq!(entry.local, true);
-    assert_eq!(entry.remote_state, true);
-    assert_eq!(entry.local_state, true);
+    assert!(entry.remote);
+    assert!(entry.local);
+    assert!(entry.remote_state);
+    assert!(entry.local_state);
     table.set_option(201, entry);
     table.reset_states();
     let entry = table.get_option(201);
-    assert_eq!(entry.remote, true);
-    assert_eq!(entry.local, true);
-    assert_eq!(entry.remote_state, false);
-    assert_eq!(entry.local_state, false);
+    assert!(entry.remote);
+    assert!(entry.local);
+    assert!(!entry.remote_state);
+    assert!(!entry.local_state);
   }
 }

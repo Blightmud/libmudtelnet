@@ -278,7 +278,7 @@ impl Parser {
   ///
   /// This method will do nothing if the option is not "supported" locally via the `CompatibilityTable`.
   pub fn subnegotiation_text(&mut self, option: u8, text: &str) -> Option<events::TelnetEvents> {
-    self.subnegotiation(option, Bytes::copy_from_slice(&text.as_bytes()))
+    self.subnegotiation(option, Bytes::copy_from_slice(text.as_bytes()))
   }
   /// Directly send a string, with appended `\r\n`, to the remote end, along with an `IAC (255) GOAHEAD (249)` sequence.
   ///

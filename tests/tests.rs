@@ -221,7 +221,7 @@ fn test_subneg_utf8_content() {
 
   // The event should be a Subnegotiation for the GMCP option, with the correct in-tact
   // buffer contents.
-  if let TelnetEvents::Subnegotiation(sub) = events.get(0).unwrap() {
+  if let TelnetEvents::Subnegotiation(sub) = events.first().unwrap() {
     assert_eq!(sub.option, 201, "option should be GMCP");
     assert_eq!(
       sub.buffer, wave_emoji,

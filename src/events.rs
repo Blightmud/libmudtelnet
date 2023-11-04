@@ -8,18 +8,18 @@ pub struct TelnetIAC {
   pub command: u8,
 }
 
-impl Into<Bytes> for TelnetIAC {
-  fn into(self) -> Bytes {
+impl From<TelnetIAC> for Bytes {
+  fn from(val: TelnetIAC) -> Self {
     let mut buf = BytesMut::with_capacity(2);
     buf.put_u8(255);
-    buf.put_u8(self.command);
+    buf.put_u8(val.command);
     buf.freeze()
   }
 }
 
-impl Into<Vec<u8>> for TelnetIAC {
-  fn into(self) -> Vec<u8> {
-    let b: Bytes = self.into();
+impl From<TelnetIAC> for Vec<u8> {
+  fn from(val: TelnetIAC) -> Self {
+    let b: Bytes = val.into();
     b.to_vec()
   }
 }
@@ -41,9 +41,9 @@ pub struct TelnetNegotiation {
   pub option: u8,
 }
 
-impl Into<Bytes> for TelnetNegotiation {
-  fn into(self) -> Bytes {
-    let data = [self.command, self.option];
+impl From<TelnetNegotiation> for Bytes {
+  fn from(val: TelnetNegotiation) -> Self {
+    let data = [val.command, val.option];
     let mut buf = BytesMut::with_capacity(3);
     buf.put_u8(255);
     buf.put(&data[..]);
@@ -51,9 +51,9 @@ impl Into<Bytes> for TelnetNegotiation {
   }
 }
 
-impl Into<Vec<u8>> for TelnetNegotiation {
-  fn into(self) -> Vec<u8> {
-    let b: Bytes = self.into();
+impl From<TelnetNegotiation> for Vec<u8> {
+  fn from(val: TelnetNegotiation) -> Self {
+    let b: Bytes = val.into();
     b.to_vec()
   }
 }
@@ -75,22 +75,22 @@ pub struct TelnetSubnegotiation {
   pub buffer: Bytes,
 }
 
-impl Into<Bytes> for TelnetSubnegotiation {
-  fn into(self) -> Bytes {
-    let head: [u8; 3] = [255, 250, self.option];
-    let parsed = &Parser::escape_iac(self.buffer)[..];
+impl From<TelnetSubnegotiation> for Bytes {
+  fn from(val: TelnetSubnegotiation) -> Self {
+    let head: [u8; 3] = [255, 250, val.option];
+    let parsed = &Parser::escape_iac(val.buffer)[..];
     let tail: [u8; 2] = [255, 240];
     let mut buf = BytesMut::with_capacity(head.len() + parsed.len() + tail.len());
     buf.put(&head[..]);
-    buf.put(&parsed[..]);
+    buf.put(parsed);
     buf.put(&tail[..]);
     buf.freeze()
   }
 }
 
-impl Into<Vec<u8>> for TelnetSubnegotiation {
-  fn into(self) -> Vec<u8> {
-    let b: Bytes = self.into();
+impl From<TelnetSubnegotiation> for Vec<u8> {
+  fn from(val: TelnetSubnegotiation) -> Self {
+    let b: Bytes = val.into();
     b.to_vec()
   }
 }
@@ -122,9 +122,9 @@ pub enum TelnetEvents {
   DecompressImmediate(Bytes),
 }
 
-impl Into<Bytes> for TelnetEvents {
-  fn into(self) -> Bytes {
-    match self {
+impl From<TelnetEvents> for Bytes {
+  fn from(val: TelnetEvents) -> Self {
+    match val {
       TelnetEvents::IAC(iac) => iac.into(),
       TelnetEvents::Negotiation(neg) => neg.into(),
       TelnetEvents::Subnegotiation(sub) => sub.into(),
