@@ -299,7 +299,7 @@ impl Parser {
   fn extract_event_data(&mut self) -> Vec<EventType> {
     enum State {
       Normal,
-      IAC,
+      Iac,
       Neg,
       Sub,
     }
@@ -317,10 +317,10 @@ impl Parser {
               events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..index])));
             }
             cmd_begin = index;
-            iter_state = State::IAC;
+            iter_state = State::Iac;
           }
         }
-        State::IAC => {
+        State::Iac => {
           match val {
             IAC => iter_state = State::Normal, // Double IAC, ignore
             GA | EOR | NOP => {
