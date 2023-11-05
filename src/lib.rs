@@ -23,7 +23,7 @@ pub mod telnet;
 use compatibility::CompatibilityTable;
 use telnet::op_command::{DO, DONT, EOR, GA, IAC, NOP, SB, SE, WILL, WONT};
 
-pub enum EventType {
+enum EventType {
   None(Bytes),
   IAC(Bytes),
   SubNegotiation(Bytes, Option<Bytes>),
