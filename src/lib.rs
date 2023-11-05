@@ -420,6 +420,7 @@ impl Parser {
               event_list.push(events::TelnetEvents::build_iac(*command));
             }
             (Some(&IAC), Some(command), Some(opt)) => {
+              // Negotiation command
               event_list.extend(self.process_negotiation(*command, *opt));
             }
             (Some(c), _, _) if *c != IAC => {
