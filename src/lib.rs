@@ -317,7 +317,7 @@ impl Parser {
 
     let mut events: Vec<EventType> = Vec::with_capacity(4);
     let iter = self.buffer.iter().enumerate();
-    let mut cmd_begin: usize = 0;
+    let mut cmd_begin = 0;
 
     for (index, &val) in iter {
       match iter_state {
@@ -466,7 +466,7 @@ impl Parser {
           }
         }
         EventType::SubNegotiation(buffer, remaining) => {
-          let len: usize = buffer.len();
+          let len = buffer.len();
           if buffer[len - 2] == IAC && buffer[len - 1] == SE {
             // Valid ending
             let opt = self.options.get_option(buffer[2]);

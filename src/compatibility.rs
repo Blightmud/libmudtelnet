@@ -87,7 +87,7 @@ impl CompatibilityTable {
   /// An option bitmask can be generated using the `CompatibilityEntry` struct, using `entry.into_u8()`.
   #[must_use]
   pub fn from_options(values: &[(u8, u8)]) -> Self {
-    let mut options: [u8; 256] = [0; 256];
+    let mut options = [0; 256];
     for (opt, val) in values {
       options[*opt as usize] = *val;
     }
