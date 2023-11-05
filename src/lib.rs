@@ -104,8 +104,14 @@ impl Parser {
 
   /// Get whether the remote end supports and is using linemode.
   pub fn linemode_enabled(&mut self) -> bool {
-    let opt = self.options.get_option(telnet::op_option::LINEMODE);
-    opt.remote && opt.remote_state
+    matches!(
+      self.options.get_option(telnet::op_option::LINEMODE),
+      CompatibilityEntry {
+        remote: true,
+        remote_state: true,
+        ..
+      }
+    )
   }
 
   /// Escape IAC bytes in data that is to be transmitted and treated as a non-IAC sequence.
