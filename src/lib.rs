@@ -286,13 +286,15 @@ impl Parser {
   where
     Bytes: From<T>,
   {
-    let opt = self.options.get_option(option);
-    if opt.local && opt.local_state {
-      Some(events::TelnetEvents::build_send(
+    match self.options.get_option(option) {
+      CompatibilityEntry {
+        local: true,
+        local_state: true,
+        ..
+      } => Some(events::TelnetEvents::build_send(
         events::TelnetSubnegotiation::new(option, Bytes::from(data)).into(),
-      ))
-    } else {
-      None
+      )),
+      _ => None,
     }
   }
 
