@@ -20,12 +20,12 @@ pub mod compatibility;
 pub mod events;
 pub mod telnet;
 
-use compatibility::CompatibilityTable;
+use compatibility::{CompatibilityEntry, CompatibilityTable};
 use telnet::op_command::{DO, DONT, EOR, GA, IAC, NOP, SB, SE, WILL, WONT};
 
 enum EventType {
   None(Bytes),
-  IAC(Bytes),
+  Iac(Bytes),
   SubNegotiation(Bytes, Option<Bytes>),
   Neg(Bytes),
 }
@@ -346,7 +346,7 @@ impl Parser {
         }
         (State::Iac, IAC) => (State::Normal, cmd_begin), // Double IAC, ignore,
         (State::Iac, GA | EOR | NOP) => {
-          events.push(EventType::IAC(buf.slice(cmd_begin..=index)));
+          events.push(EventType::Iac(buf.slice(cmd_begin..=index)));
           (State::Normal, index + 1)
         }
         (State::Iac, SB) => (State::Sub, cmd_begin),
@@ -395,84 +395,104 @@ impl Parser {
   }
 
   /// The internal parser method that takes the current buffer and generates the corresponding events.
+  #[allow(clippy::too_many_lines)] // TODO(@cpu): remove after refactoring.
   fn process(&mut self) -> Vec<events::TelnetEvents> {
     let mut event_list = Vec::with_capacity(2);
     for event in self.extract_event_data() {
       match event {
-        EventType::None(buffer) | EventType::IAC(buffer) | EventType::Neg(buffer) => {
-          if buffer.is_empty() {
-            continue;
-          }
-          if buffer[0] == IAC {
-            match buffer.len() {
-              2 => {
-                if buffer[1] != SE {
-                  // IAC command
-                  event_list.push(events::TelnetEvents::build_iac(buffer[1]));
-                }
-              }
-              3 => {
-                // Negotiation
-                let mut opt = self.options.get_option(buffer[2]);
-                let event = events::TelnetNegotiation::new(buffer[1], buffer[2]);
-                match buffer[1] {
-                  WILL => {
-                    if opt.remote && !opt.remote_state {
-                      opt.remote_state = true;
-                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                        IAC, DO, buffer[2]
-                      ])));
-                      self.options.set_option(buffer[2], opt);
-                      event_list.push(events::TelnetEvents::Negotiation(event));
-                    } else if !opt.remote {
-                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                        IAC, DONT, buffer[2]
-                      ])));
-                    }
-                  }
-                  WONT => {
-                    if opt.remote_state {
-                      opt.remote_state = false;
-                      self.options.set_option(buffer[2], opt);
-                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                        IAC, DONT, buffer[2]
-                      ])));
-                    }
-                    event_list.push(events::TelnetEvents::Negotiation(event));
-                  }
-                  DO => {
-                    if opt.local && !opt.local_state {
-                      opt.local_state = true;
-                      opt.remote_state = true;
-                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                        IAC, WILL, buffer[2]
-                      ])));
-                      self.options.set_option(buffer[2], opt);
-                      event_list.push(events::TelnetEvents::Negotiation(event));
-                    } else if !opt.local {
-                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                        IAC, WONT, buffer[2]
-                      ])));
-                    }
-                  }
-                  DONT => {
-                    if opt.local_state {
-                      opt.local_state = false;
-                      self.options.set_option(buffer[2], opt);
-                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                        IAC, WONT, buffer[2]
-                      ])));
-                    }
-                    event_list.push(events::TelnetEvents::Negotiation(event));
-                  }
-                  _ => (),
-                }
-              }
-              _ => (),
+        EventType::None(buffer) | EventType::Iac(buffer) | EventType::Neg(buffer) => {
+          match (buffer.first(), buffer.get(1), buffer.get(2)) {
+            (Some(&IAC), Some(command), None) if *command != SE => {
+              // IAC command
+              event_list.push(events::TelnetEvents::build_iac(*command));
             }
-          } else {
-            // Not an iac sequence, it's data!
-            event_list.push(events::TelnetEvents::build_receive(buffer));
+            (Some(&IAC), Some(command), Some(opt)) => {
+              let mut entry = self.options.get_option(*opt);
+              let event = events::TelnetNegotiation::new(*command, *opt);
+
+              match (*command, entry) {
+                (
+                  WILL,
+                  CompatibilityEntry {
+                    remote: true,
+                    remote_state: false,
+                    ..
+                  },
+                ) => {
+                  entry.remote_state = true;
+                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DO, *opt])));
+                  self.options.set_option(*opt, entry);
+                  event_list.push(events::TelnetEvents::Negotiation(event));
+                }
+                (WILL, CompatibilityEntry { remote: false, .. }) => {
+                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                    IAC, DONT, *opt
+                  ])));
+                }
+                (
+                  WONT,
+                  CompatibilityEntry {
+                    remote_state: true, ..
+                  },
+                ) => {
+                  entry.remote_state = false;
+                  self.options.set_option(*opt, entry);
+                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                    IAC, DONT, *opt
+                  ])));
+                  event_list.push(events::TelnetEvents::Negotiation(event));
+                }
+                (
+                  DO,
+                  CompatibilityEntry {
+                    local: true,
+                    local_state: false,
+                    ..
+                  },
+                ) => {
+                  entry.local_state = true;
+                  entry.remote_state = true;
+                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                    IAC, WILL, *opt
+                  ])));
+                  self.options.set_option(*opt, entry);
+                  event_list.push(events::TelnetEvents::Negotiation(event));
+                }
+                (
+                  DO,
+                  CompatibilityEntry {
+                    local_state: false, ..
+                  }
+                  | CompatibilityEntry { local: false, .. },
+                ) => {
+                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                    IAC, WONT, *opt
+                  ])));
+                }
+                (
+                  DONT,
+                  CompatibilityEntry {
+                    local_state: true, ..
+                  },
+                ) => {
+                  entry.local_state = false;
+                  self.options.set_option(*opt, entry);
+                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                    IAC, WONT, *opt
+                  ])));
+                  event_list.push(events::TelnetEvents::Negotiation(event));
+                }
+                (DONT | WONT, CompatibilityEntry { .. }) => {
+                  event_list.push(events::TelnetEvents::Negotiation(event));
+                }
+                _ => {}
+              }
+            }
+            (Some(c), _, _) if *c != IAC => {
+              // Not an iac sequence, it's data!
+              event_list.push(events::TelnetEvents::build_receive(buffer));
+            }
+            _ => {}
           }
         }
         EventType::SubNegotiation(buffer, remaining) => {
@@ -527,7 +547,7 @@ impl Parser {
           match val {
             IAC => iter_state = State::Normal, // Double IAC, ignore
             GA | EOR | NOP => {
-              events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..=index])));
+              events.push(EventType::Iac(vbytes!(&self.buffer[cmd_begin..=index])));
               cmd_begin = index + 1;
               iter_state = State::Normal;
             }
@@ -591,7 +611,7 @@ impl Parser {
     let mut event_list: Vec<events::TelnetEvents> = Vec::with_capacity(2);
     for event in self.og_extract_event_data() {
       match event {
-        EventType::None(buffer) | EventType::IAC(buffer) | EventType::Neg(buffer) => {
+        EventType::None(buffer) | EventType::Iac(buffer) | EventType::Neg(buffer) => {
           if buffer.is_empty() {
             continue;
           }
@@ -747,6 +767,38 @@ mod tests {
     test_app(&TelnetApplication {
       options: vec![],
       received_data: vec![vec![240, 255, 250, 255, 240, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff7() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff8() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255, 252, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff9() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![254, 255, 255, 255, 254, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff10() {
+    test_app(&TelnetApplication {
+      options: vec![(255, 254), (1, 0)],
+      received_data: vec![vec![255, 253, 255]],
     })
   }
 
