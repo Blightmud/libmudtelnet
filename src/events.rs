@@ -25,11 +25,13 @@ impl From<TelnetIAC> for Vec<u8> {
 }
 
 impl TelnetIAC {
-  #[must_use] pub fn new(command: u8) -> Self {
+  #[must_use]
+  pub fn new(command: u8) -> Self {
     Self { command }
   }
   /// Consume the sequence struct and return the bytes.
-  #[must_use] pub fn into_bytes(self) -> Vec<u8> {
+  #[must_use]
+  pub fn into_bytes(self) -> Vec<u8> {
     self.into()
   }
 }
@@ -59,11 +61,13 @@ impl From<TelnetNegotiation> for Vec<u8> {
 }
 
 impl TelnetNegotiation {
-  #[must_use] pub fn new(command: u8, option: u8) -> Self {
+  #[must_use]
+  pub fn new(command: u8, option: u8) -> Self {
     Self { command, option }
   }
   /// Consume the sequence struct and return the bytes.
-  #[must_use] pub fn into_bytes(self) -> Vec<u8> {
+  #[must_use]
+  pub fn into_bytes(self) -> Vec<u8> {
     self.into()
   }
 }
@@ -145,11 +149,13 @@ impl TelnetEvents {
     TelnetEvents::DataReceive(buffer)
   }
   /// Helper method to generate a `TelnetEvents::IAC`.
-  #[must_use] pub fn build_iac(command: u8) -> TelnetEvents {
+  #[must_use]
+  pub fn build_iac(command: u8) -> TelnetEvents {
     TelnetEvents::IAC(TelnetIAC::new(command))
   }
   /// Helper method to generate a `TelnetEvents::Negotiation`.
-  #[must_use] pub fn build_negotiation(command: u8, option: u8) -> Self {
+  #[must_use]
+  pub fn build_negotiation(command: u8, option: u8) -> Self {
     TelnetEvents::Negotiation(TelnetNegotiation::new(command, option))
   }
   /// Helper method to generate a `TelnetEvents::Subnegotiation`.
