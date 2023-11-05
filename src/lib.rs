@@ -212,9 +212,8 @@ impl Parser {
   /// `Option<events::TelnetEvents::DataSend>` - A `DataSend` event to be processed, or None if the option is already disabled.
   ///
   pub fn _wont(&mut self, option: u8) -> Option<events::TelnetEvents> {
-    let mut opt = self.options.get_option(option);
-    match opt {
-      CompatibilityEntry {
+    match self.options.get_option(option) {
+      mut opt @ CompatibilityEntry {
         local_state: true, ..
       } => {
         opt.local_state = false;
