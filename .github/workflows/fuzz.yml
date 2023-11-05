@@ -2,9 +2,9 @@ name: Fuzz
 
 on:
   push:
-    branches: [ master, cpu-refresh-wip ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   fuzz:
