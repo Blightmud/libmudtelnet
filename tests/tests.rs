@@ -94,27 +94,30 @@ fn handle_events(event_list: Vec<events::TelnetEvents>) -> CapturedEvents {
 #[test]
 fn test_parser() {
   let mut instance: Parser = Parser::new();
-  instance.options.support_local(201);
-  instance.options.support_local(86);
-  if let Some(ev) = instance._will(201) {
+  instance.options.support_local(opt::GMCP);
+  instance.options.support_local(opt::MCCP2);
+  if let Some(ev) = instance._will(opt::GMCP) {
     assert_eq!(handle_events(vec![ev]), events![Event::SEND]);
   }
-  if let Some(ev) = instance._will(86) {
+  if let Some(ev) = instance._will(opt::MCCP2) {
     assert_eq!(handle_events(vec![ev]), events![Event::SEND]);
   }
   assert_eq!(
-    handle_events(instance.receive(&[b"Hello, rust!", &[255, 249][..]].concat())),
+    handle_events(instance.receive(&[b"Hello, rust!", &[cmd::IAC, cmd::GA][..]].concat())),
     events![Event::RECV, Event::IAC]
   );
-  assert_eq!(handle_events(instance.receive(&[255, 253, 201])), events![]);
   assert_eq!(
-    handle_events(instance.receive(&[&[255, 253, 200][..], b"Some random data"].concat())),
+    handle_events(instance.receive(&[cmd::IAC, cmd::DO, opt::GMCP])),
+    events![]
+  );
+  assert_eq!(
+    handle_events(instance.receive(&[&[cmd::IAC, cmd::DO, 200][..], b"Some random data"].concat())),
     events![Event::SEND, Event::RECV]
   );
   assert_eq!(
     handle_events(
       instance.receive(
-        &events::TelnetSubnegotiation::new(201, Bytes::copy_from_slice(b"Core.Hello {}"))
+        &events::TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}"))
           .into_bytes()
       ),
     ),
@@ -124,10 +127,10 @@ fn test_parser() {
     handle_events(
       instance.receive(
         &[
-          &events::TelnetSubnegotiation::new(201, Bytes::copy_from_slice(b"Core.Hello {}"))
+          &events::TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}"))
             .into_bytes()[..],
           b"Random text",
-          &[255, 249][..]
+          &[cmd::IAC, cmd::GA][..]
         ]
         .concat()
       ),
@@ -138,9 +141,10 @@ fn test_parser() {
     handle_events(
       instance.receive(
         &[
-          &events::TelnetSubnegotiation::new(86, Bytes::copy_from_slice(b" ")).into_bytes()[..],
+          &events::TelnetSubnegotiation::new(opt::MCCP2, Bytes::copy_from_slice(b" ")).into_bytes()
+            [..],
           b"This is compressed data",
-          &[255, 249][..]
+          &[cmd::IAC, cmd::GA][..]
         ]
         .concat()
       ),
@@ -148,6 +152,7 @@ fn test_parser() {
     events![Event::SUBNEGOTIATION, Event::DECOM]
   );
   assert_eq!(
+    // TODO(@cpu): Can data be made easier to understand at a glance?
     handle_events(instance.receive(&[
       87, 104, 97, 116, 32, 105, 115, 32, 121, 111, 117, 114, 32, 112, 97, 115, 115, 119, 111, 114,
       100, 63, 32, 255, 239, 255, 251, 1
@@ -238,7 +243,7 @@ fn test_concat() {
   let b: &[u8] = &[1, 2, 3];
   let c: &[u8] = &[4, 5, 6, 7, 8, 9, 0];
   let expected: Vec<u8> = vec![255, 102, 50, 65, 20, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0];
-  let actual: Vec<u8> = [a, b, c].concat();
+  let actual = [a, b, c].concat();
   assert_eq!(expected, actual);
 }
 
