@@ -337,12 +337,9 @@ impl Parser {
     // Splitting is O(1) and doesn't copy the data. Freezing is zero-cost. Taking a slice is O(1).
     let buf = self.buffer.split().freeze();
     for (index, &val) in buf.iter().enumerate() {
-      // Each loop iteration, look at the current state and the current val to decide
-      // the next state and where the cmd_begin marker should be set.
-      assert!(cmd_begin <= index);
       (iter_state, cmd_begin) = match (&iter_state, val) {
         (State::Normal, IAC) => {
-          if cmd_begin < index {
+          if cmd_begin != index {
             events.push(EventType::None(buf.slice(cmd_begin..index)));
           }
           (State::Iac, index)
