@@ -187,9 +187,8 @@ impl Parser {
   ///
   /// This method will do nothing if the option is not "supported" locally via the `CompatibilityTable`.
   pub fn _will(&mut self, option: u8) -> Option<events::TelnetEvents> {
-    let mut opt = self.options.get_option(option);
-    match opt {
-      CompatibilityEntry {
+    match self.options.get_option(option) {
+      mut opt @ CompatibilityEntry {
         local: true,
         local_state: false,
         ..
