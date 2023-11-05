@@ -331,42 +331,46 @@ impl Parser {
     let mut iter_state = State::Normal;
     let mut cmd_begin = 0;
 
-    for (index, &val) in self.buffer.iter().enumerate() {
+    // Empty self.buffer into an immutable Bytes we can process.
+    // We'll create views of this buffer to pass to the events using 'buf.slice'.
+    // Splitting is O(1) and doesn't copy the data. Freezing is zero-cost. Taking a slice is O(1).
+    let buf = self.buffer.split().freeze();
+    for (index, &val) in buf.iter().enumerate() {
       iter_state = match (&iter_state, val) {
         (State::Normal, IAC) => {
           if cmd_begin < index {
-            events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..index])));
+            events.push(EventType::None(buf.slice(cmd_begin..index)));
           }
           cmd_begin = index;
           State::Iac
         }
         (State::Iac, IAC) => State::Normal, // Double IAC, ignore,
         (State::Iac, GA | EOR | NOP) => {
-          events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..=index])));
+          events.push(EventType::IAC(buf.slice(cmd_begin..=index)));
           cmd_begin = index + 1;
           State::Normal
         }
         (State::Iac, SB) => State::Sub,
         (State::Iac, _) => State::Neg, // WILL | WONT | DO | DONT | IS | SEND
         (State::Neg, _) => {
-          events.push(EventType::Neg(vbytes!(&self.buffer[cmd_begin..=index])));
+          events.push(EventType::Neg(buf.slice(cmd_begin..=index)));
           cmd_begin = index + 1;
           State::Normal
         }
         (State::Sub | State::SubIac, IAC) => State::SubIac,
         (State::SubIac, SE) => {
-          let opt = self.buffer[cmd_begin + 2];
+          let opt = buf[cmd_begin + 2];
           if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
             // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
             events.push(EventType::SubNegotiation(
-              vbytes!(&self.buffer[cmd_begin..=index]),
-              Some(vbytes!(&self.buffer[index + 1..])),
+              buf.slice(cmd_begin..=index),
+              Some(buf.slice(index + 1..)),
             ));
-            cmd_begin = self.buffer.len();
+            cmd_begin = buf.len();
             break;
           }
           events.push(EventType::SubNegotiation(
-            vbytes!(&self.buffer[cmd_begin..=index]),
+            buf.slice(cmd_begin..=index),
             None,
           ));
           cmd_begin = index + 1;
@@ -377,18 +381,15 @@ impl Parser {
       };
     }
 
-    if cmd_begin < self.buffer.len() {
+    if cmd_begin < buf.len() {
       match iter_state {
-        State::Sub | State::SubIac => events.push(EventType::SubNegotiation(
-          vbytes!(&self.buffer[cmd_begin..]),
-          None,
-        )),
-        _ => events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..]))),
+        State::Sub | State::SubIac => {
+          events.push(EventType::SubNegotiation(buf.slice(cmd_begin..), None))
+        }
+        _ => events.push(EventType::None(buf.slice(cmd_begin..))),
       }
     }
 
-    // Empty the buffer when we are done
-    self.buffer.clear();
     events
   }
 
