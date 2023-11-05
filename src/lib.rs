@@ -327,9 +327,7 @@ impl Parser {
   ///
   /// The string will have IAC (255) bytes escaped before being sent.
   pub fn send_text(&mut self, text: &str) -> events::TelnetEvents {
-    events::TelnetEvents::build_send(Bytes::copy_from_slice(&Parser::escape_iac(
-      format!("{text}\r\n").into_bytes(),
-    )))
+    events::TelnetEvents::build_send(Parser::escape_iac(format!("{text}\r\n")))
   }
 
   /// Extract sub-buffers from the current buffer
