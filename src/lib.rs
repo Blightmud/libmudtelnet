@@ -240,8 +240,7 @@ impl Parser {
   ///
   /// This method will do nothing if the option is not "supported" remotely via the `CompatibilityTable`.
   pub fn _do(&mut self, option: u8) -> Option<events::TelnetEvents> {
-    let opt = self.options.get_option(option);
-    match opt {
+    match self.options.get_option(option) {
       CompatibilityEntry {
         remote: true,
         remote_state: false,
@@ -262,11 +261,11 @@ impl Parser {
   /// `Option<events::TelnetEvents::DataSend>` - A `DataSend` event to be processed, or None if the option is already disabled.
   ///
   pub fn _dont(&mut self, option: u8) -> Option<events::TelnetEvents> {
-    let opt = self.options.get_option(option);
-    if opt.remote_state {
-      Some(self.negotiate(DONT, option))
-    } else {
-      None
+    match self.options.get_option(option) {
+      CompatibilityEntry {
+        remote_state: true, ..
+      } => Some(self.negotiate(DONT, option)),
+      _ => None,
     }
   }
 
