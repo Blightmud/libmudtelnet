@@ -21,6 +21,7 @@ impl CompatibilityEntry {
       remote_state,
     }
   }
+
   /// Creates a u8 bitmask from this entry.
   #[must_use]
   pub fn into_u8(self) -> u8 {
@@ -39,6 +40,7 @@ impl CompatibilityEntry {
     }
     res
   }
+
   /// Expands a u8 bitmask into a `CompatibilityEntry`.
   #[must_use]
   pub fn from(value: u8) -> Self {
@@ -72,10 +74,12 @@ impl CompatibilityTable {
   pub const LOCAL_STATE: u8 = 1 << 2;
   /// Option is currently enabled remotely.
   pub const REMOTE_STATE: u8 = 1 << 3;
+
   #[must_use]
   pub fn new() -> Self {
     Self::default()
   }
+
   /// Create a table with some option values set.
   ///
   /// # Arguments
@@ -93,18 +97,21 @@ impl CompatibilityTable {
     }
     Self { options }
   }
+
   /// Enable local support for an option.
   pub fn support_local(&mut self, option: u8) {
     let mut opt = CompatibilityEntry::from(self.options[option as usize]);
     opt.local = true;
     self.set_option(option, opt);
   }
+
   /// Enable remote support for an option.
   pub fn support_remote(&mut self, option: u8) {
     let mut opt = CompatibilityEntry::from(self.options[option as usize]);
     opt.remote = true;
     self.set_option(option, opt);
   }
+
   /// Enable both remote and local support for an option.
   pub fn support(&mut self, option: u8) {
     let mut opt = CompatibilityEntry::from(self.options[option as usize]);
@@ -112,11 +119,13 @@ impl CompatibilityTable {
     opt.remote = true;
     self.set_option(option, opt);
   }
+
   /// Retrieve a `CompatbilityEntry` generated from the current state of the option value.
   #[must_use]
   pub fn get_option(&self, option: u8) -> CompatibilityEntry {
     CompatibilityEntry::from(self.options[option as usize])
   }
+
   /// Set an option value by getting the bitmask from a `CompatibilityEntry`.
   pub fn set_option(&mut self, option: u8, entry: CompatibilityEntry) {
     self.options[option as usize] = entry.into_u8();

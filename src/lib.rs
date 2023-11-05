@@ -59,6 +59,7 @@ impl Parser {
   pub fn new() -> Self {
     Self::default()
   }
+
   /// Create an empty parser, setting the initial internal buffer capcity.
   #[must_use]
   pub fn with_capacity(size: usize) -> Self {
@@ -67,6 +68,7 @@ impl Parser {
       buffer: BytesMut::with_capacity(size),
     }
   }
+
   /// Create an parser, setting the initial internal buffer capacity and directly supplying a `CompatibilityTable`.
   #[must_use]
   pub fn with_support_and_capacity(size: usize, table: CompatibilityTable) -> Self {
@@ -75,6 +77,7 @@ impl Parser {
       buffer: BytesMut::with_capacity(size),
     }
   }
+
   /// Create a parser, directly supplying a `CompatibilityTable`.
   ///
   /// Uses the default initial buffer capacity of 128 bytes.
@@ -85,6 +88,7 @@ impl Parser {
       buffer: BytesMut::with_capacity(128),
     }
   }
+
   /// Receive bytes into the internal buffer.
   ///
   /// # Arguments
@@ -99,11 +103,13 @@ impl Parser {
     self.buffer.put(data);
     self.process()
   }
+
   /// Get whether the remote end supports and is using linemode.
   pub fn linemode_enabled(&mut self) -> bool {
     let opt = self.options.get_option(telnet::op_option::LINEMODE);
     opt.remote && opt.remote_state
   }
+
   /// Escape IAC bytes in data that is to be transmitted and treated as a non-IAC sequence.
   ///
   /// # Example
@@ -122,6 +128,7 @@ impl Parser {
     }
     t.freeze()
   }
+
   /// Reverse escaped IAC bytes for non-IAC sequences and data.
   ///
   /// # Example
@@ -142,6 +149,7 @@ impl Parser {
     }
     t.freeze()
   }
+
   /// Negotiate an option.
   ///
   /// # Arguments
@@ -162,6 +170,7 @@ impl Parser {
   pub fn negotiate(&mut self, command: u8, option: u8) -> events::TelnetEvents {
     events::TelnetEvents::build_send(events::TelnetNegotiation::new(command, option).into())
   }
+
   /// Indicate to the other side that you are able and wanting to utilize an option.
   ///
   /// # Arguments
@@ -185,6 +194,7 @@ impl Parser {
       None
     }
   }
+
   /// Indicate to the other side that you are not wanting to utilize an option.
   ///
   /// # Arguments
@@ -205,6 +215,7 @@ impl Parser {
       None
     }
   }
+
   /// Indicate to the other side that you would like them to utilize an option.
   ///
   /// # Arguments
@@ -226,6 +237,7 @@ impl Parser {
       None
     }
   }
+
   /// Indicate to the other side that you would like them to stop utilizing an option.
   ///
   /// # Arguments
@@ -244,6 +256,7 @@ impl Parser {
       None
     }
   }
+
   /// Send a subnegotiation for a locally supported option.
   ///
   /// # Arguments
@@ -272,6 +285,7 @@ impl Parser {
       None
     }
   }
+
   /// Send a subnegotiation for a locally supported option, using a string instead of raw byte values.
   ///
   /// # Arguments
@@ -290,6 +304,7 @@ impl Parser {
   pub fn subnegotiation_text(&mut self, option: u8, text: &str) -> Option<events::TelnetEvents> {
     self.subnegotiation(option, Bytes::copy_from_slice(text.as_bytes()))
   }
+
   /// Directly send a string, with appended `\r\n`, to the remote end, along with an `IAC (255) GOAHEAD (249)` sequence.
   ///
   /// # Returns

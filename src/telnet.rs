@@ -8,7 +8,6 @@ macro_rules! u8_const {
 /// Module containing constants for Telnet Command codes.
 pub mod op_command {
   u8_const!(IAC, 255);
-
   u8_const!(WILL, 251);
   u8_const!(WONT, 252);
   u8_const!(DO, 253);
