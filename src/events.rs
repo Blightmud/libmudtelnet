@@ -11,10 +11,7 @@ pub struct TelnetIAC {
 
 impl From<TelnetIAC> for Bytes {
   fn from(val: TelnetIAC) -> Self {
-    let mut buf = BytesMut::with_capacity(2);
-    buf.put_u8(IAC);
-    buf.put_u8(val.command);
-    buf.freeze()
+    Bytes::copy_from_slice(&[IAC, val.command])
   }
 }
 
