@@ -112,14 +112,14 @@ impl Parser {
     Bytes: From<T>,
   {
     let data = Bytes::from(data);
-    let mut t = BytesMut::with_capacity(data.len());
-    for byte in &data {
-      t.put_u8(*byte);
-      if *byte == IAC {
-        t.put_u8(IAC);
+    let mut res = BytesMut::with_capacity(data.len());
+    for byte in data {
+      res.put_u8(byte);
+      if byte == IAC {
+        res.put_u8(IAC);
       }
     }
-    t.freeze()
+    res.freeze()
   }
 
   /// Reverse escaped IAC bytes for non-IAC sequences and data.
@@ -131,16 +131,16 @@ impl Parser {
     Bytes: From<T>,
   {
     let data = Bytes::from(data);
-    let mut t = BytesMut::with_capacity(data.len());
+    let mut res = BytesMut::with_capacity(data.len());
     let mut last = 0;
-    for val in &data {
-      if *val == IAC && last == IAC {
+    for val in data {
+      if val == IAC && last == IAC {
         continue;
       }
-      last = *val;
-      t.put_u8(*val);
+      last = val;
+      res.put_u8(val);
     }
-    t.freeze()
+    res.freeze()
   }
 
   /// Negotiate an option.
