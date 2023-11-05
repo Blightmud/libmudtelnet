@@ -1,11 +1,16 @@
-[![Rust](https://github.com/envis10n/libtelnet-rs/workflows/Rust/badge.svg?branch=master)](https://github.com/envis10n/libtelnet-rs)
-[![Crates.io](https://img.shields.io/crates/v/libtelnet-rs)](https://crates.io/crates/libtelnet-rs)
-[![Docs.rs](https://docs.rs/libtelnet-rs/badge.svg)](https://docs.rs/libtelnet-rs)
+[![Rust](https://github.com/cpu/libmudtelnet/workflows/Rust/badge.svg?branch=master)](https://github.com/cpu/libmudtelnet)
+[![Crates.io](https://img.shields.io/crates/v/libmudtelnet)](https://crates.io/crates/libmudtelnet)
+[![Docs.rs](https://docs.rs/libmudtelnet/badge.svg)](https://docs.rs/libmudtelnet)
 
-# libtelnet-rs
+# libmudtelnet
+
+A low-level Telnet protocol implementation for MUD clients, written in Rust.
+
+`libmudtelnet` is a fork of [libtelnet-rs], which is itself inspired by the [libtelnet].
 
 A [libtelnet]-inspired telnet parser for Rust.
 
+[libtelnet-rs]: https://github.com/envis10n/libtelnet-rs
 [libtelnet]: https://github.com/seanmiddleditch/libtelnet
 
 # Changelog
@@ -37,3 +42,20 @@ any method used for sending data.
 [receive]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.receive
 [telnet events]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/events/enum.TelnetEvents.html
 [send-text]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.send_text
+
+# Compatibility
+
+The initial release of `libmudtelnet` has been tested for compatibility with `libtelnet-rs`. In general
+while much of the code has been rewritten to be more idiomatic Rust, the API is the same and break
+changes have been avoided. An upcoming semver incompatible release will be made with broader API changes
+in the near future.
+
+# Credits
+
+Many thanks to:
+
+* [envis10n] for his work on [libtelnet-rs], which `libmudtelnet` is forked from.
+* [Sean Middleditch] for his work on [libtelnet], which inspired `libtelent-rs`.
+
+[envis10n]: https://github.com/envis10n/
+[Sean Middleditch]: https://github.com/seanmiddleditch/
