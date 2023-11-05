@@ -324,8 +324,8 @@ impl Parser {
       Iac,
       Neg,
       Sub,
-      SubOpt(u8),
-      SubIac(u8),
+      SubOpt { opt: u8 },
+      SubIac { opt: u8 },
     }
 
     let mut events = Vec::with_capacity(4);
@@ -358,9 +358,11 @@ impl Parser {
           events.push(EventType::Neg(buf.slice(cmd_begin..=index)));
           (State::Normal, index + 1)
         }
-        (State::Sub, opt) => (State::SubOpt(opt), cmd_begin),
-        (State::SubOpt(opt) | State::SubIac(opt), IAC) => (State::SubIac(*opt), cmd_begin),
-        (State::SubIac(opt), SE) => {
+        (State::Sub, opt) => (State::SubOpt { opt }, cmd_begin),
+        (State::SubOpt { opt } | State::SubIac { opt }, IAC) => {
+          (State::SubIac { opt: *opt }, cmd_begin)
+        }
+        (State::SubIac { opt }, SE) => {
           if *opt == telnet::op_option::MCCP2 || *opt == telnet::op_option::MCCP3 {
             // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
             events.push(EventType::SubNegotiation(
@@ -376,14 +378,14 @@ impl Parser {
           ));
           (State::Normal, index + 1)
         }
-        (State::SubIac(opt), _) => (State::SubOpt(*opt), cmd_begin),
+        (State::SubIac { opt }, _) => (State::SubOpt { opt: *opt }, cmd_begin),
         (cur_state, _) => (*cur_state, cmd_begin),
       };
     }
 
     if cmd_begin < buf.len() {
       match iter_state {
-        State::Sub | State::SubOpt(_) | State::SubIac(_) => {
+        State::Sub | State::SubOpt { .. } | State::SubIac { .. } => {
           events.push(EventType::SubNegotiation(buf.slice(cmd_begin..), None));
         }
         _ => events.push(EventType::None(buf.slice(cmd_begin..))),
