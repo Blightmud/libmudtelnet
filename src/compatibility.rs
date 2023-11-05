@@ -136,6 +136,7 @@ impl CompatibilityTable {
 #[cfg(test)]
 mod test_compat {
   use super::*;
+  use crate::telnet::op_option::GMCP;
 
   #[test]
   fn test_reset() {
@@ -145,9 +146,9 @@ mod test_compat {
     assert!(entry.local);
     assert!(entry.remote_state);
     assert!(entry.local_state);
-    table.set_option(201, entry);
+    table.set_option(GMCP, entry);
     table.reset_states();
-    let entry = table.get_option(201);
+    let entry = table.get_option(GMCP);
     assert!(entry.remote);
     assert!(entry.local);
     assert!(!entry.remote_state);
