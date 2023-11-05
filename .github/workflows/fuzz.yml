@@ -2,7 +2,7 @@ name: Fuzz
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, cpu-refresh-wip ]
   pull_request:
     branches: [ master ]
 
