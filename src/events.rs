@@ -132,9 +132,9 @@ impl From<TelnetEvents> for Bytes {
       TelnetEvents::IAC(iac) => iac.into(),
       TelnetEvents::Negotiation(neg) => neg.into(),
       TelnetEvents::Subnegotiation(sub) => sub.into(),
-      TelnetEvents::DataReceive(data) => data,
-      TelnetEvents::DataSend(data) => data,
-      TelnetEvents::DecompressImmediate(data) => data,
+      TelnetEvents::DataReceive(data)
+      | TelnetEvents::DataSend(data)
+      | TelnetEvents::DecompressImmediate(data) => data,
     }
   }
 }
