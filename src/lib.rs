@@ -1,5 +1,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(clippy::pedantic)]
+#![allow(
+  clippy::module_name_repetitions,
+  clippy::fn_params_excessive_bools,
+  clippy::struct_excessive_bools
+)]
 
 #[cfg(not(feature = "std"))]
 extern crate alloc;
