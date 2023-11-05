@@ -321,7 +321,7 @@ impl Parser {
     }
 
     let mut iter_state = State::Normal;
-    let mut events: Vec<EventType> = Vec::with_capacity(4);
+    let mut events = Vec::with_capacity(4);
     let mut cmd_begin = 0;
 
     for (index, &val) in self.buffer.iter().enumerate() {
