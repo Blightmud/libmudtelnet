@@ -45,11 +45,8 @@ pub struct Parser {
 }
 
 impl Default for Parser {
-  fn default() -> Parser {
-    Parser {
-      options: CompatibilityTable::new(),
-      buffer: BytesMut::with_capacity(128),
-    }
+  fn default() -> Self {
+    Parser::with_capacity(128)
   }
 }
 
@@ -63,19 +60,7 @@ impl Parser {
   /// Create an empty parser, setting the initial internal buffer capcity.
   #[must_use]
   pub fn with_capacity(size: usize) -> Self {
-    Self {
-      options: CompatibilityTable::new(),
-      buffer: BytesMut::with_capacity(size),
-    }
-  }
-
-  /// Create an parser, setting the initial internal buffer capacity and directly supplying a `CompatibilityTable`.
-  #[must_use]
-  pub fn with_support_and_capacity(size: usize, table: CompatibilityTable) -> Self {
-    Self {
-      options: table,
-      buffer: BytesMut::with_capacity(size),
-    }
+    Self::with_support_and_capacity(size, CompatibilityTable::default())
   }
 
   /// Create a parser, directly supplying a `CompatibilityTable`.
@@ -83,9 +68,16 @@ impl Parser {
   /// Uses the default initial buffer capacity of 128 bytes.
   #[must_use]
   pub fn with_support(table: CompatibilityTable) -> Self {
+    Self::with_support_and_capacity(128, table)
+  }
+
+  /// Create an parser, setting the initial internal buffer capacity and directly supplying a `CompatibilityTable`.
+  // TODO(@cpu): 'table' should be first arg to match name.
+  #[must_use]
+  pub fn with_support_and_capacity(size: usize, table: CompatibilityTable) -> Self {
     Self {
       options: table,
-      buffer: BytesMut::with_capacity(128),
+      buffer: BytesMut::with_capacity(size),
     }
   }
 
