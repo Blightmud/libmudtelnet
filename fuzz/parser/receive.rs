@@ -15,7 +15,9 @@ struct TelnetApplication {
 
 fuzz_target!(|app: TelnetApplication| {
   let mut parser = Parser::with_support(CompatibilityTable::from_options(&app.options));
+  let mut og_parser = Parser::with_support(CompatibilityTable::from_options(&app.options));
+
   for data in app.received_data {
-    parser.receive(&data);
+    assert_eq!(parser.receive(&data), og_parser.receive_og(&data))
   }
 });

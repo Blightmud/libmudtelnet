@@ -97,6 +97,11 @@ impl Parser {
     self.process()
   }
 
+  pub fn receive_og(&mut self, data: &[u8]) -> Vec<events::TelnetEvents> {
+    self.buffer.put(data);
+    self.og_process()
+  }
+
   /// Get whether the remote end supports and is using linemode.
   pub fn linemode_enabled(&mut self) -> bool {
     let opt = self.options.get_option(telnet::op_option::LINEMODE);
@@ -490,5 +495,240 @@ impl Parser {
       }
     }
     event_list
+  }
+
+  // TODO(@cpu): Remove soon - hack for testing against original parser.
+  fn og_extract_event_data(&mut self) -> Vec<EventType> {
+    enum State {
+      Normal,
+      Iac,
+      Neg,
+      Sub,
+    }
+
+    let mut iter_state = State::Normal;
+    let mut events = Vec::with_capacity(4);
+    let mut cmd_begin = 0;
+
+    for (index, &val) in self.buffer.iter().enumerate() {
+      match iter_state {
+        State::Normal => {
+          if val == IAC {
+            if cmd_begin < index {
+              events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..index])));
+            }
+            cmd_begin = index;
+            iter_state = State::Iac;
+          }
+        }
+        State::Iac => {
+          match val {
+            IAC => iter_state = State::Normal, // Double IAC, ignore
+            GA | EOR | NOP => {
+              events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..=index])));
+              cmd_begin = index + 1;
+              iter_state = State::Normal;
+            }
+            SB => iter_state = State::Sub,
+            _ => iter_state = State::Neg, // WILL | WONT | DO | DONT | IS | SEND
+          }
+        }
+        State::Neg => {
+          events.push(EventType::Neg(vbytes!(&self.buffer[cmd_begin..=index])));
+          cmd_begin = index + 1;
+          iter_state = State::Normal;
+        }
+        State::Sub => {
+          if val == SE && index > 1 && self.buffer[index - 1] == IAC {
+            let opt = self.buffer[cmd_begin + 2];
+            if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
+              // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
+              events.push(EventType::SubNegotiation(
+                vbytes!(&self.buffer[cmd_begin..=index]),
+                Some(vbytes!(&self.buffer[index + 1..])),
+              ));
+              cmd_begin = self.buffer.len();
+              break;
+            }
+            events.push(EventType::SubNegotiation(
+              vbytes!(&self.buffer[cmd_begin..=index]),
+              None,
+            ));
+            cmd_begin = index + 1;
+            iter_state = State::Normal;
+          }
+        }
+      }
+    }
+    if cmd_begin < self.buffer.len() {
+      match iter_state {
+        State::Sub => events.push(EventType::SubNegotiation(
+          vbytes!(&self.buffer[cmd_begin..]),
+          None,
+        )),
+        _ => events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..]))),
+      }
+    }
+
+    // Empty the buffer when we are done
+    self.buffer.clear();
+    events
+  }
+
+  // TODO(@cpu): Remove soon - hack for testing against original parser.
+  fn og_process(&mut self) -> Vec<events::TelnetEvents> {
+    let mut event_list: Vec<events::TelnetEvents> = Vec::with_capacity(2);
+    for event in self.og_extract_event_data() {
+      match event {
+        EventType::None(buffer) | EventType::IAC(buffer) | EventType::Neg(buffer) => {
+          if buffer.is_empty() {
+            continue;
+          }
+          if buffer[0] == IAC {
+            match buffer.len() {
+              2 => {
+                if buffer[1] != SE {
+                  // IAC command
+                  event_list.push(events::TelnetEvents::build_iac(buffer[1]));
+                }
+              }
+              3 => {
+                // Negotiation
+                let mut opt = self.options.get_option(buffer[2]);
+                let event = events::TelnetNegotiation::new(buffer[1], buffer[2]);
+                match buffer[1] {
+                  WILL => {
+                    if opt.remote && !opt.remote_state {
+                      opt.remote_state = true;
+                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                        IAC, DO, buffer[2]
+                      ])));
+                      self.options.set_option(buffer[2], opt);
+                      event_list.push(events::TelnetEvents::Negotiation(event));
+                    } else if !opt.remote {
+                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                        IAC, DONT, buffer[2]
+                      ])));
+                    }
+                  }
+                  WONT => {
+                    if opt.remote_state {
+                      opt.remote_state = false;
+                      self.options.set_option(buffer[2], opt);
+                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                        IAC, DONT, buffer[2]
+                      ])));
+                    }
+                    event_list.push(events::TelnetEvents::Negotiation(event));
+                  }
+                  DO => {
+                    if opt.local && !opt.local_state {
+                      opt.local_state = true;
+                      opt.remote_state = true;
+                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                        IAC, WILL, buffer[2]
+                      ])));
+                      self.options.set_option(buffer[2], opt);
+                      event_list.push(events::TelnetEvents::Negotiation(event));
+                    } else if !opt.local {
+                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                        IAC, WONT, buffer[2]
+                      ])));
+                    }
+                  }
+                  DONT => {
+                    if opt.local_state {
+                      opt.local_state = false;
+                      self.options.set_option(buffer[2], opt);
+                      event_list.push(events::TelnetEvents::build_send(vbytes!(&[
+                        IAC, WONT, buffer[2]
+                      ])));
+                    }
+                    event_list.push(events::TelnetEvents::Negotiation(event));
+                  }
+                  _ => (),
+                }
+              }
+              _ => (),
+            }
+          } else {
+            // Not an iac sequence, it's data!
+            event_list.push(events::TelnetEvents::build_receive(buffer));
+          }
+        }
+        EventType::SubNegotiation(buffer, remaining) => {
+          let len = buffer.len();
+          if buffer[len - 2] == IAC && buffer[len - 1] == SE {
+            // Valid ending
+            let opt = self.options.get_option(buffer[2]);
+            if opt.local && opt.local_state && len - 2 >= 3 {
+              event_list.push(events::TelnetEvents::build_subnegotiation(
+                buffer[2],
+                vbytes!(&buffer[3..len - 2]),
+              ));
+              if let Some(rbuf) = remaining {
+                event_list.push(events::TelnetEvents::DecompressImmediate(rbuf));
+              }
+            }
+          } else {
+            // Missing the rest
+            self.buffer.put(&buffer[..]);
+          }
+        }
+      }
+    }
+    event_list
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use alloc::vec;
+  #[derive(Debug)]
+  struct TelnetApplication {
+    options: Vec<(u8, u8)>,
+    received_data: Vec<Vec<u8>>,
+  }
+
+  #[test]
+  fn test_parser_diff1() {
+    test_app(&TelnetApplication {
+      options: vec![(255, 254)],
+      received_data: vec![vec![255, 255, 255, 255, 255, 254, 255, 0]],
+    });
+  }
+
+  #[test]
+  fn test_parser_diff2() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![45, 255, 250, 255]],
+    });
+  }
+
+  #[test]
+  fn test_parser_diff3() {
+    test_app(&TelnetApplication {
+      options: vec![(0, 1)],
+      received_data: vec![vec![255, 253, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff4() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255, 250, 255, 255, 240, 250]],
+    })
+  }
+
+  fn test_app(app: &TelnetApplication) {
+    let mut parser = Parser::with_support(CompatibilityTable::from_options(&app.options));
+    let mut og_parser = Parser::with_support(CompatibilityTable::from_options(&app.options));
+
+    for data in &app.received_data {
+      assert_eq!(parser.receive(&data), og_parser.receive_og(&data));
+    }
   }
 }
