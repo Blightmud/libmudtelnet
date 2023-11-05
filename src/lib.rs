@@ -313,6 +313,7 @@ impl Parser {
 
   /// Extract sub-buffers from the current buffer
   fn extract_event_data(&mut self) -> Vec<EventType> {
+    #[derive(Copy, Clone)]
     enum State {
       Normal,
       Iac,
@@ -326,28 +327,28 @@ impl Parser {
     let mut cmd_begin = 0;
 
     for (index, &val) in self.buffer.iter().enumerate() {
-      match (&iter_state, val) {
+      iter_state = match (&iter_state, val) {
         (State::Normal, IAC) => {
           if cmd_begin < index {
             events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..index])));
           }
           cmd_begin = index;
-          iter_state = State::Iac;
+          State::Iac
         }
-        (State::Iac, IAC) => iter_state = State::Normal, // Double IAC, ignore,
+        (State::Iac, IAC) => State::Normal, // Double IAC, ignore,
         (State::Iac, GA | EOR | NOP) => {
           events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..=index])));
           cmd_begin = index + 1;
-          iter_state = State::Normal;
+          State::Normal
         }
-        (State::Iac, SB) => iter_state = State::Sub,
-        (State::Iac, _) => iter_state = State::Neg, // WILL | WONT | DO | DONT | IS | SEND
+        (State::Iac, SB) => State::Sub,
+        (State::Iac, _) => State::Neg, // WILL | WONT | DO | DONT | IS | SEND
         (State::Neg, _) => {
           events.push(EventType::Neg(vbytes!(&self.buffer[cmd_begin..=index])));
           cmd_begin = index + 1;
-          iter_state = State::Normal;
+          State::Normal
         }
-        (State::Sub | State::SubIac, IAC) => iter_state = State::SubIac,
+        (State::Sub | State::SubIac, IAC) => State::SubIac,
         (State::SubIac, SE) => {
           let opt = self.buffer[cmd_begin + 2];
           if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
@@ -364,11 +365,11 @@ impl Parser {
             None,
           ));
           cmd_begin = index + 1;
-          iter_state = State::Normal;
+          State::Normal
         }
-        (State::SubIac, _) => iter_state = State::Sub,
-        _ => (),
-      }
+        (State::SubIac, _) => State::Sub,
+        (cur_state, _) => *cur_state,
+      };
     }
 
     if cmd_begin < self.buffer.len() {
