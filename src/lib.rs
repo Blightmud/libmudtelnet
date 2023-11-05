@@ -389,7 +389,7 @@ impl Parser {
 
   /// The internal parser method that takes the current buffer and generates the corresponding events.
   fn process(&mut self) -> Vec<events::TelnetEvents> {
-    let mut event_list: Vec<events::TelnetEvents> = Vec::with_capacity(2);
+    let mut event_list = Vec::with_capacity(2);
     for event in self.extract_event_data() {
       match event {
         EventType::None(buffer) | EventType::IAC(buffer) | EventType::Neg(buffer) => {
