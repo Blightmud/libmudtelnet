@@ -214,12 +214,15 @@ impl Parser {
   ///
   pub fn _wont(&mut self, option: u8) -> Option<events::TelnetEvents> {
     let mut opt = self.options.get_option(option);
-    if opt.local_state {
-      opt.local_state = false;
-      self.options.set_option(option, opt);
-      Some(self.negotiate(WONT, option))
-    } else {
-      None
+    match opt {
+      CompatibilityEntry {
+        local_state: true, ..
+      } => {
+        opt.local_state = false;
+        self.options.set_option(option, opt);
+        Some(self.negotiate(WONT, option))
+      }
+      _ => None,
     }
   }
 
