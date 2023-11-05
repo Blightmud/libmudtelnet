@@ -324,7 +324,8 @@ impl Parser {
       Iac,
       Neg,
       Sub,
-      SubIac,
+      SubOpt(u8),
+      SubIac(u8),
     }
 
     let mut events = Vec::with_capacity(4);
@@ -338,6 +339,7 @@ impl Parser {
     for (index, &val) in buf.iter().enumerate() {
       // Each loop iteration, look at the current state and the current val to decide
       // the next state and where the cmd_begin marker should be set.
+      assert!(cmd_begin <= index);
       (iter_state, cmd_begin) = match (&iter_state, val) {
         (State::Normal, IAC) => {
           if cmd_begin < index {
@@ -356,10 +358,10 @@ impl Parser {
           events.push(EventType::Neg(buf.slice(cmd_begin..=index)));
           (State::Normal, index + 1)
         }
-        (State::Sub | State::SubIac, IAC) => (State::SubIac, cmd_begin),
-        (State::SubIac, SE) => {
-          let opt = buf[cmd_begin + 2];
-          if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
+        (State::Sub, opt) => (State::SubOpt(opt), cmd_begin),
+        (State::SubOpt(opt) | State::SubIac(opt), IAC) => (State::SubIac(*opt), cmd_begin),
+        (State::SubIac(opt), SE) => {
+          if *opt == telnet::op_option::MCCP2 || *opt == telnet::op_option::MCCP3 {
             // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
             events.push(EventType::SubNegotiation(
               buf.slice(cmd_begin..=index),
@@ -374,14 +376,14 @@ impl Parser {
           ));
           (State::Normal, index + 1)
         }
-        (State::SubIac, _) => (State::Sub, cmd_begin),
+        (State::SubIac(opt), _) => (State::SubOpt(*opt), cmd_begin),
         (cur_state, _) => (*cur_state, cmd_begin),
       };
     }
 
     if cmd_begin < buf.len() {
       match iter_state {
-        State::Sub | State::SubIac => {
+        State::Sub | State::SubOpt(_) | State::SubIac(_) => {
           events.push(EventType::SubNegotiation(buf.slice(cmd_begin..), None));
         }
         _ => events.push(EventType::None(buf.slice(cmd_begin..))),
@@ -538,7 +540,16 @@ impl Parser {
           iter_state = State::Normal;
         }
         State::Sub => {
-          if val == SE && index > 1 && self.buffer[index - 1] == IAC {
+          // Every sub negotiation should be of the form:
+          //   IAC SB <option> <optional data> IAC SE
+          // Meaning it must:
+          //  * Be at least 5 bytes long.
+          //  * Start with IAC SB
+          //  * End with IAC SE
+          let long_enough = index - cmd_begin >= 4;
+          let has_prefix = self.buffer[cmd_begin] == IAC && self.buffer[cmd_begin + 1] == SB;
+          let has_suffix = val == SE && self.buffer[index - 1] == IAC;
+          if long_enough && has_prefix && has_suffix {
             let opt = self.buffer[cmd_begin + 2];
             if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
               // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
@@ -719,6 +730,22 @@ mod tests {
     test_app(&TelnetApplication {
       options: vec![],
       received_data: vec![vec![255, 250, 255, 255, 240, 250]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff5() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255, 250, 255, 240, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff6() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![240, 255, 250, 255, 240, 0]],
     })
   }
 
