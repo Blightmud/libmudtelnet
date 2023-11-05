@@ -11,7 +11,7 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std as alloc;
 
-use alloc::{format, vec::Vec};
+use alloc::{format, vec, vec::Vec};
 
 use bytes::{BufMut, Bytes, BytesMut};
 
@@ -440,7 +440,6 @@ impl Parser {
   }
 
   fn process_negotiation(&mut self, command: u8, opt: u8) -> Vec<events::TelnetEvents> {
-    let mut event_list = Vec::new();
     let mut entry = self.options.get_option(opt);
     let event = events::TelnetNegotiation::new(command, opt);
     match (command, entry) {
@@ -453,12 +452,14 @@ impl Parser {
         },
       ) => {
         entry.remote_state = true;
-        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DO, opt])));
         self.options.set_option(opt, entry);
-        event_list.push(events::TelnetEvents::Negotiation(event));
+        vec![
+          events::TelnetEvents::build_send(vbytes!(&[IAC, DO, opt])),
+          events::TelnetEvents::Negotiation(event),
+        ]
       }
       (WILL, CompatibilityEntry { remote: false, .. }) => {
-        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DONT, opt])));
+        vec![events::TelnetEvents::build_send(vbytes!(&[IAC, DONT, opt]))]
       }
       (
         WONT,
@@ -468,8 +469,10 @@ impl Parser {
       ) => {
         entry.remote_state = false;
         self.options.set_option(opt, entry);
-        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DONT, opt])));
-        event_list.push(events::TelnetEvents::Negotiation(event));
+        vec![
+          events::TelnetEvents::build_send(vbytes!(&[IAC, DONT, opt])),
+          events::TelnetEvents::Negotiation(event),
+        ]
       }
       (
         DO,
@@ -481,9 +484,11 @@ impl Parser {
       ) => {
         entry.local_state = true;
         entry.remote_state = true;
-        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, WILL, opt])));
         self.options.set_option(opt, entry);
-        event_list.push(events::TelnetEvents::Negotiation(event));
+        vec![
+          events::TelnetEvents::build_send(vbytes!(&[IAC, WILL, opt])),
+          events::TelnetEvents::Negotiation(event),
+        ]
       }
       (
         DO,
@@ -492,7 +497,7 @@ impl Parser {
         }
         | CompatibilityEntry { local: false, .. },
       ) => {
-        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, WONT, opt])));
+        vec![events::TelnetEvents::build_send(vbytes!(&[IAC, WONT, opt]))]
       }
       (
         DONT,
@@ -502,16 +507,16 @@ impl Parser {
       ) => {
         entry.local_state = false;
         self.options.set_option(opt, entry);
-        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, WONT, opt])));
-        event_list.push(events::TelnetEvents::Negotiation(event));
+        vec![
+          events::TelnetEvents::build_send(vbytes!(&[IAC, WONT, opt])),
+          events::TelnetEvents::Negotiation(event),
+        ]
       }
       (DONT | WONT, CompatibilityEntry { .. }) => {
-        event_list.push(events::TelnetEvents::Negotiation(event));
+        vec![events::TelnetEvents::Negotiation(event)]
       }
-      _ => {}
+      _ => Vec::default(),
     }
-
-    event_list
   }
 
   // TODO(@cpu): Remove soon - hack for testing against original parser.
