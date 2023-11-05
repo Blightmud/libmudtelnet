@@ -10,7 +10,7 @@ cargo-fuzz = true
 [dependencies]
 libfuzzer-sys = { version = "0.4", features = ["arbitrary-derive"] }
 
-[dependencies.libtelnet-rs]
+[dependencies.libmudtelnet]
 path = ".."
 
 # Prevent this from interfering with workspaces

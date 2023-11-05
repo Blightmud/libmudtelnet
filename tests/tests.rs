@@ -1,9 +1,9 @@
 use bytes::Bytes;
-use libtelnet_rs::telnet::{op_command as cmd, op_option as opt};
-use libtelnet_rs::vbytes;
 
-use libtelnet_rs::compatibility::{CompatibilityEntry, CompatibilityTable};
-use libtelnet_rs::*;
+use libmudtelnet::compatibility::{CompatibilityEntry, CompatibilityTable};
+use libmudtelnet::events::{TelnetEvents, TelnetSubnegotiation};
+use libmudtelnet::telnet::{op_command as cmd, op_option as opt};
+use libmudtelnet::{vbytes, Parser};
 
 /// Test the parser and its general functionality.
 
@@ -55,34 +55,34 @@ impl PartialEq for CapturedEvents {
   }
 }
 
-fn handle_events(event_list: Vec<events::TelnetEvents>) -> CapturedEvents {
+fn handle_events(event_list: Vec<TelnetEvents>) -> CapturedEvents {
   let mut events = CapturedEvents::default();
   for event in event_list {
     match event {
-      events::TelnetEvents::IAC(ev) => {
+      TelnetEvents::IAC(ev) => {
         println!("IAC: {}", ev.command);
         events.push(Event::IAC);
       }
-      events::TelnetEvents::Negotiation(ev) => {
+      TelnetEvents::Negotiation(ev) => {
         println!("Negotiation: {} {}", ev.command, ev.option);
         events.push(Event::NEGOTIATION);
       }
-      events::TelnetEvents::Subnegotiation(ev) => {
+      TelnetEvents::Subnegotiation(ev) => {
         println!("Subnegotiation: {} {:?}", ev.option, ev.buffer);
         events.push(Event::SUBNEGOTIATION);
       }
-      events::TelnetEvents::DataReceive(buffer) => {
+      TelnetEvents::DataReceive(buffer) => {
         println!(
           "Receive: {}",
           std::str::from_utf8(&buffer[..]).unwrap_or("Bad utf-8 bytes")
         );
         events.push(Event::RECV);
       }
-      events::TelnetEvents::DataSend(buffer) => {
+      TelnetEvents::DataSend(buffer) => {
         println!("Send: {:?}", buffer);
         events.push(Event::SEND);
       }
-      events::TelnetEvents::DecompressImmediate(buffer) => {
+      TelnetEvents::DecompressImmediate(buffer) => {
         println!("DECOMPRESS: {:?}", buffer);
         events.push(Event::DECOM);
       }
@@ -115,19 +115,16 @@ fn test_parser() {
     events![Event::SEND, Event::RECV]
   );
   assert_eq!(
-    handle_events(
-      instance.receive(
-        &events::TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}"))
-          .into_bytes()
-      ),
-    ),
+    handle_events(instance.receive(
+      &TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}")).into_bytes()
+    ),),
     events![Event::SUBNEGOTIATION]
   );
   assert_eq!(
     handle_events(
       instance.receive(
         &[
-          &events::TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}"))
+          &TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}"))
             .into_bytes()[..],
           b"Random text",
           &[cmd::IAC, cmd::GA][..]
@@ -141,8 +138,7 @@ fn test_parser() {
     handle_events(
       instance.receive(
         &[
-          &events::TelnetSubnegotiation::new(opt::MCCP2, Bytes::copy_from_slice(b" ")).into_bytes()
-            [..],
+          &TelnetSubnegotiation::new(opt::MCCP2, Bytes::copy_from_slice(b" ")).into_bytes()[..],
           b"This is compressed data",
           &[cmd::IAC, cmd::GA][..]
         ]
@@ -202,7 +198,6 @@ fn test_subneg_separate_receives() {
 // even when the content includes a SE byte.
 #[test]
 fn test_subneg_utf8_content() {
-  use crate::events::TelnetEvents;
   use cmd::{IAC, SB, SE};
   use opt::GMCP;
 

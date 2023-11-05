@@ -65,8 +65,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "libtelnet-rs"
-version = "2.0.0"
+name = "libmudtelnet"
+version = "2.0.1"
 dependencies = [
  "bytes",
 ]
@@ -76,7 +76,7 @@ name = "libtelnet-rs-fuzz"
 version = "0.0.1"
 dependencies = [
  "libfuzzer-sys",
- "libtelnet-rs",
+ "libmudtelnet",
 ]
 
 [[package]]

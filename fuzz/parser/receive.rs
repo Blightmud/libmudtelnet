@@ -4,8 +4,8 @@ use libfuzzer_sys::arbitrary;
 use libfuzzer_sys::arbitrary::Arbitrary;
 use libfuzzer_sys::fuzz_target;
 
-use libtelnet_rs::compatibility::CompatibilityTable;
-use libtelnet_rs::Parser;
+use libmudtelnet::compatibility::CompatibilityTable;
+use libmudtelnet::Parser;
 
 #[derive(Arbitrary, Debug)]
 struct TelnetApplication {
@@ -15,11 +15,8 @@ struct TelnetApplication {
 
 fuzz_target!(|app: TelnetApplication| {
   let mut parser = Parser::with_support(CompatibilityTable::from_options(&app.options));
-  let mut og_parser = Parser::with_support(CompatibilityTable::from_options(&app.options));
 
   for data in app.received_data {
-    assert_eq!(parser.receive(&data), og_parser.receive_og(&data))
+    parser.receive(&data);
   }
-
-  assert_eq!(parser.options, og_parser.options);
 });

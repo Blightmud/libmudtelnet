@@ -1,13 +1,12 @@
 [package]
-name = "libtelnet-rs"
-description = "libtelnet-inspired telnet parser for rust."
-version = "2.0.0"
-authors = ["envis10n <envis10n@protonmail.com>"]
+name = "libmudtelnet"
+description = "low-level Telnet protocol implementation for MUD clients"
+version = "2.0.1"
 edition = "2018"
 readme = "README.md"
-homepage = "https://github.com/envis10n/libtelnet-rs"
-repository = "https://github.com/envis10n/libtelnet-rs"
-documentation = "https://docs.rs/libtelnet-rs"
+homepage = "https://github.com/cpu/libmudtelnet"
+repository = "https://github.com/cpu/libmudtelnet"
+documentation = "https://docs.rs/libmudtelnet"
 license = "MIT"
 keywords = ["telnet", "libtelnet", "mud"]
 categories = ["network-programming"]
