@@ -1,3 +1,4 @@
+use crate::telnet::op_command::{IAC, SB, SE};
 use crate::Parser;
 use alloc::vec::Vec;
 use bytes::{BufMut, Bytes, BytesMut};
@@ -11,7 +12,7 @@ pub struct TelnetIAC {
 impl From<TelnetIAC> for Bytes {
   fn from(val: TelnetIAC) -> Self {
     let mut buf = BytesMut::with_capacity(2);
-    buf.put_u8(255);
+    buf.put_u8(IAC);
     buf.put_u8(val.command);
     buf.freeze()
   }
@@ -47,7 +48,7 @@ impl From<TelnetNegotiation> for Bytes {
   fn from(val: TelnetNegotiation) -> Self {
     let data = [val.command, val.option];
     let mut buf = BytesMut::with_capacity(3);
-    buf.put_u8(255);
+    buf.put_u8(IAC);
     buf.put(&data[..]);
     buf.freeze()
   }
@@ -81,9 +82,9 @@ pub struct TelnetSubnegotiation {
 
 impl From<TelnetSubnegotiation> for Bytes {
   fn from(val: TelnetSubnegotiation) -> Self {
-    let head: [u8; 3] = [255, 250, val.option];
+    let head = [IAC, SB, val.option];
     let parsed = &Parser::escape_iac(val.buffer)[..];
-    let tail: [u8; 2] = [255, 240];
+    let tail = [IAC, SE];
     let mut buf = BytesMut::with_capacity(head.len() + parsed.len() + tail.len());
     buf.put(&head[..]);
     buf.put(parsed);
