@@ -3,6 +3,8 @@ use crate::Parser;
 use alloc::vec::Vec;
 use bytes::{BufMut, Bytes, BytesMut};
 
+// TODO(@cpu): are some of these From<x> for Vec<u8> necessary since Bytes implements From<Vec<u8>>?
+
 /// A struct representing a 2 byte IAC sequence.
 #[derive(Clone, Copy, Debug)]
 pub struct TelnetIAC {
@@ -17,8 +19,7 @@ impl From<TelnetIAC> for Bytes {
 
 impl From<TelnetIAC> for Vec<u8> {
   fn from(val: TelnetIAC) -> Self {
-    let b: Bytes = val.into();
-    b.to_vec()
+    val.into()
   }
 }
 
@@ -43,18 +44,13 @@ pub struct TelnetNegotiation {
 
 impl From<TelnetNegotiation> for Bytes {
   fn from(val: TelnetNegotiation) -> Self {
-    let data = [val.command, val.option];
-    let mut buf = BytesMut::with_capacity(3);
-    buf.put_u8(IAC);
-    buf.put(&data[..]);
-    buf.freeze()
+    Bytes::copy_from_slice(&[IAC, val.command, val.option])
   }
 }
 
 impl From<TelnetNegotiation> for Vec<u8> {
   fn from(val: TelnetNegotiation) -> Self {
-    let b: Bytes = val.into();
-    b.to_vec()
+    val.into()
   }
 }
 
@@ -92,6 +88,8 @@ impl From<TelnetSubnegotiation> for Bytes {
 
 impl From<TelnetSubnegotiation> for Vec<u8> {
   fn from(val: TelnetSubnegotiation) -> Self {
+    // TODO(@cpu): Something fishy going on here - using a more direct approach is causing
+    //             infinite recursion from weird type inference (I think)
     let b: Bytes = val.into();
     b.to_vec()
   }
