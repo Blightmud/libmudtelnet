@@ -54,7 +54,7 @@ impl CompatibilityEntry {
 }
 
 /// A table of options that are supported locally or remotely, and their current state.
-#[derive(Clone)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct CompatibilityTable {
   options: [u8; 256],
 }

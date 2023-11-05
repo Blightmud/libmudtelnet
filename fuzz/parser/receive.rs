@@ -20,4 +20,6 @@ fuzz_target!(|app: TelnetApplication| {
   for data in app.received_data {
     assert_eq!(parser.receive(&data), og_parser.receive_og(&data))
   }
+
+  assert_eq!(parser.options, og_parser.options);
 });
