@@ -114,8 +114,8 @@ impl Parser {
     let mut t = BytesMut::with_capacity(data.len());
     for byte in &data {
       t.put_u8(*byte);
-      if *byte == 255 {
-        t.put_u8(255);
+      if *byte == IAC {
+        t.put_u8(IAC);
       }
     }
     t.freeze()
@@ -131,9 +131,9 @@ impl Parser {
   {
     let data = Bytes::from(data);
     let mut t = BytesMut::with_capacity(data.len());
-    let mut last = 0u8;
+    let mut last = 0;
     for val in &data {
-      if *val == 255 && last == 255 {
+      if *val == IAC && last == IAC {
         continue;
       }
       last = *val;
@@ -181,7 +181,7 @@ impl Parser {
     if opt.local && !opt.local_state {
       opt.local_state = true;
       self.options.set_option(option, opt);
-      Some(self.negotiate(251, option))
+      Some(self.negotiate(WILL, option))
     } else {
       None
     }
@@ -202,7 +202,7 @@ impl Parser {
     if opt.local_state {
       opt.local_state = false;
       self.options.set_option(option, opt);
-      Some(self.negotiate(252, option))
+      Some(self.negotiate(WONT, option))
     } else {
       None
     }
@@ -224,7 +224,7 @@ impl Parser {
   pub fn _do(&mut self, option: u8) -> Option<events::TelnetEvents> {
     let opt = self.options.get_option(option);
     if opt.remote && !opt.remote_state {
-      Some(self.negotiate(253, option))
+      Some(self.negotiate(DO, option))
     } else {
       None
     }
@@ -243,7 +243,7 @@ impl Parser {
   pub fn _dont(&mut self, option: u8) -> Option<events::TelnetEvents> {
     let opt = self.options.get_option(option);
     if opt.remote_state {
-      Some(self.negotiate(254, option))
+      Some(self.negotiate(DONT, option))
     } else {
       None
     }
