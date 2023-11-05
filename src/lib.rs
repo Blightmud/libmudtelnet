@@ -132,13 +132,11 @@ impl Parser {
   {
     let data = Bytes::from(data);
     let mut res = BytesMut::with_capacity(data.len());
-    let mut last = 0;
-    for val in data {
-      if val == IAC && last == IAC {
-        continue;
+    for pair in data.chunks(2) {
+      match pair {
+        [IAC, IAC] => res.put_u8(IAC),
+        _ => res.put(pair),
       }
-      last = val;
-      res.put_u8(val);
     }
     res.freeze()
   }
