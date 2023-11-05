@@ -6,7 +6,7 @@ use bytes::{BufMut, Bytes, BytesMut};
 // TODO(@cpu): are some of these From<x> for Vec<u8> necessary since Bytes implements From<Vec<u8>>?
 
 /// A struct representing a 2 byte IAC sequence.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct TelnetIAC {
   pub command: u8,
 }
@@ -37,7 +37,7 @@ impl TelnetIAC {
 }
 
 /// A struct representing a 3 byte IAC sequence.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct TelnetNegotiation {
   pub command: u8,
   pub option: u8,
@@ -69,7 +69,7 @@ impl TelnetNegotiation {
 }
 
 /// A struct representing an arbitrary length IAC subnegotiation sequence.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct TelnetSubnegotiation {
   pub option: u8,
   pub buffer: Bytes,
@@ -109,7 +109,7 @@ impl TelnetSubnegotiation {
 }
 
 /// An enum representing various telnet events.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum TelnetEvents {
   /// An IAC command sequence.
   IAC(TelnetIAC),
