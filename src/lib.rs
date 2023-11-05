@@ -325,55 +325,49 @@ impl Parser {
     let mut cmd_begin = 0;
 
     for (index, &val) in self.buffer.iter().enumerate() {
-      match iter_state {
-        State::Normal => {
-          if val == IAC {
-            if cmd_begin < index {
-              events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..index])));
-            }
-            cmd_begin = index;
-            iter_state = State::Iac;
+      match (&iter_state, val) {
+        (State::Normal, IAC) => {
+          if cmd_begin < index {
+            events.push(EventType::None(vbytes!(&self.buffer[cmd_begin..index])));
           }
+          cmd_begin = index;
+          iter_state = State::Iac;
         }
-        State::Iac => {
-          match val {
-            IAC => iter_state = State::Normal, // Double IAC, ignore
-            GA | EOR | NOP => {
-              events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..=index])));
-              cmd_begin = index + 1;
-              iter_state = State::Normal;
-            }
-            SB => iter_state = State::Sub,
-            _ => iter_state = State::Neg, // WILL | WONT | DO | DONT | IS | SEND
-          }
+        (State::Iac, IAC) => iter_state = State::Normal, // Double IAC, ignore,
+        (State::Iac, GA | EOR | NOP) => {
+          events.push(EventType::IAC(vbytes!(&self.buffer[cmd_begin..=index])));
+          cmd_begin = index + 1;
+          iter_state = State::Normal;
         }
-        State::Neg => {
+        (State::Iac, SB) => iter_state = State::Sub,
+        (State::Iac, _) => iter_state = State::Neg, // WILL | WONT | DO | DONT | IS | SEND
+        (State::Neg, _) => {
           events.push(EventType::Neg(vbytes!(&self.buffer[cmd_begin..=index])));
           cmd_begin = index + 1;
           iter_state = State::Normal;
         }
-        State::Sub => {
-          if val == SE && index > 1 && self.buffer[index - 1] == IAC {
-            let opt = self.buffer[cmd_begin + 2];
-            if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
-              // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
-              events.push(EventType::SubNegotiation(
-                vbytes!(&self.buffer[cmd_begin..=index]),
-                Some(vbytes!(&self.buffer[index + 1..])),
-              ));
-              cmd_begin = self.buffer.len();
-              break;
-            }
+        (State::Sub, SE) if index > 1 && self.buffer[index - 1] == IAC => {
+          let opt = self.buffer[cmd_begin + 2];
+          if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
+            // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
             events.push(EventType::SubNegotiation(
               vbytes!(&self.buffer[cmd_begin..=index]),
-              None,
+              Some(vbytes!(&self.buffer[index + 1..])),
             ));
-            cmd_begin = index + 1;
-            iter_state = State::Normal;
+            cmd_begin = self.buffer.len();
+            break;
           }
+          events.push(EventType::SubNegotiation(
+            vbytes!(&self.buffer[cmd_begin..=index]),
+            None,
+          ));
+          cmd_begin = index + 1;
+          iter_state = State::Normal;
         }
+        _ => (),
       }
     }
+
     if cmd_begin < self.buffer.len() {
       match iter_state {
         State::Sub => events.push(EventType::SubNegotiation(
