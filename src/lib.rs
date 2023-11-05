@@ -319,13 +319,12 @@ impl Parser {
       Neg,
       Sub,
     }
-    let mut iter_state = State::Normal;
 
+    let mut iter_state = State::Normal;
     let mut events: Vec<EventType> = Vec::with_capacity(4);
-    let iter = self.buffer.iter().enumerate();
     let mut cmd_begin = 0;
 
-    for (index, &val) in iter {
+    for (index, &val) in self.buffer.iter().enumerate() {
       match iter_state {
         State::Normal => {
           if val == IAC {
