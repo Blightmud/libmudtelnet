@@ -138,6 +138,7 @@ impl From<TelnetEvents> for Bytes {
   }
 }
 
+// TODO(@cpu): these are (IMO) probably too low-utility to be worth it.
 impl TelnetEvents {
   /// Helper method to generate a `TelnetEvents::DataSend`.
   pub fn build_send(buffer: Bytes) -> Self {
