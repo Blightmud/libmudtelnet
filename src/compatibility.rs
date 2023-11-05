@@ -24,7 +24,7 @@ impl CompatibilityEntry {
   /// Creates a u8 bitmask from this entry.
   #[must_use]
   pub fn into_u8(self) -> u8 {
-    let mut res: u8 = 0;
+    let mut res = 0;
     if self.local {
       res |= CompatibilityTable::ENABLED_LOCAL;
     }
