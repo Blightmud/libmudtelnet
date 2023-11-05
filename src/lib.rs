@@ -395,7 +395,6 @@ impl Parser {
   }
 
   /// The internal parser method that takes the current buffer and generates the corresponding events.
-  #[allow(clippy::too_many_lines)] // TODO(@cpu): remove after refactoring.
   fn process(&mut self) -> Vec<events::TelnetEvents> {
     let mut event_list = Vec::with_capacity(2);
     for event in self.extract_event_data() {
@@ -407,86 +406,7 @@ impl Parser {
               event_list.push(events::TelnetEvents::build_iac(*command));
             }
             (Some(&IAC), Some(command), Some(opt)) => {
-              let mut entry = self.options.get_option(*opt);
-              let event = events::TelnetNegotiation::new(*command, *opt);
-
-              match (*command, entry) {
-                (
-                  WILL,
-                  CompatibilityEntry {
-                    remote: true,
-                    remote_state: false,
-                    ..
-                  },
-                ) => {
-                  entry.remote_state = true;
-                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DO, *opt])));
-                  self.options.set_option(*opt, entry);
-                  event_list.push(events::TelnetEvents::Negotiation(event));
-                }
-                (WILL, CompatibilityEntry { remote: false, .. }) => {
-                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                    IAC, DONT, *opt
-                  ])));
-                }
-                (
-                  WONT,
-                  CompatibilityEntry {
-                    remote_state: true, ..
-                  },
-                ) => {
-                  entry.remote_state = false;
-                  self.options.set_option(*opt, entry);
-                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                    IAC, DONT, *opt
-                  ])));
-                  event_list.push(events::TelnetEvents::Negotiation(event));
-                }
-                (
-                  DO,
-                  CompatibilityEntry {
-                    local: true,
-                    local_state: false,
-                    ..
-                  },
-                ) => {
-                  entry.local_state = true;
-                  entry.remote_state = true;
-                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                    IAC, WILL, *opt
-                  ])));
-                  self.options.set_option(*opt, entry);
-                  event_list.push(events::TelnetEvents::Negotiation(event));
-                }
-                (
-                  DO,
-                  CompatibilityEntry {
-                    local_state: false, ..
-                  }
-                  | CompatibilityEntry { local: false, .. },
-                ) => {
-                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                    IAC, WONT, *opt
-                  ])));
-                }
-                (
-                  DONT,
-                  CompatibilityEntry {
-                    local_state: true, ..
-                  },
-                ) => {
-                  entry.local_state = false;
-                  self.options.set_option(*opt, entry);
-                  event_list.push(events::TelnetEvents::build_send(vbytes!(&[
-                    IAC, WONT, *opt
-                  ])));
-                  event_list.push(events::TelnetEvents::Negotiation(event));
-                }
-                (DONT | WONT, CompatibilityEntry { .. }) => {
-                  event_list.push(events::TelnetEvents::Negotiation(event));
-                }
-                _ => {}
-              }
+              event_list.extend(self.process_negotiation(*command, *opt));
             }
             (Some(c), _, _) if *c != IAC => {
               // Not an iac sequence, it's data!
@@ -516,6 +436,81 @@ impl Parser {
         }
       }
     }
+    event_list
+  }
+
+  fn process_negotiation(&mut self, command: u8, opt: u8) -> Vec<events::TelnetEvents> {
+    let mut event_list = Vec::new();
+    let mut entry = self.options.get_option(opt);
+    let event = events::TelnetNegotiation::new(command, opt);
+    match (command, entry) {
+      (
+        WILL,
+        CompatibilityEntry {
+          remote: true,
+          remote_state: false,
+          ..
+        },
+      ) => {
+        entry.remote_state = true;
+        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DO, opt])));
+        self.options.set_option(opt, entry);
+        event_list.push(events::TelnetEvents::Negotiation(event));
+      }
+      (WILL, CompatibilityEntry { remote: false, .. }) => {
+        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DONT, opt])));
+      }
+      (
+        WONT,
+        CompatibilityEntry {
+          remote_state: true, ..
+        },
+      ) => {
+        entry.remote_state = false;
+        self.options.set_option(opt, entry);
+        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, DONT, opt])));
+        event_list.push(events::TelnetEvents::Negotiation(event));
+      }
+      (
+        DO,
+        CompatibilityEntry {
+          local: true,
+          local_state: false,
+          ..
+        },
+      ) => {
+        entry.local_state = true;
+        entry.remote_state = true;
+        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, WILL, opt])));
+        self.options.set_option(opt, entry);
+        event_list.push(events::TelnetEvents::Negotiation(event));
+      }
+      (
+        DO,
+        CompatibilityEntry {
+          local_state: false, ..
+        }
+        | CompatibilityEntry { local: false, .. },
+      ) => {
+        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, WONT, opt])));
+      }
+      (
+        DONT,
+        CompatibilityEntry {
+          local_state: true, ..
+        },
+      ) => {
+        entry.local_state = false;
+        self.options.set_option(opt, entry);
+        event_list.push(events::TelnetEvents::build_send(vbytes!(&[IAC, WONT, opt])));
+        event_list.push(events::TelnetEvents::Negotiation(event));
+      }
+      (DONT | WONT, CompatibilityEntry { .. }) => {
+        event_list.push(events::TelnetEvents::Negotiation(event));
+      }
+      _ => {}
+    }
+
     event_list
   }
 
@@ -809,5 +804,7 @@ mod tests {
     for data in &app.received_data {
       assert_eq!(parser.receive(&data), og_parser.receive_og(&data));
     }
+
+    assert_eq!(parser.options, og_parser.options);
   }
 }
