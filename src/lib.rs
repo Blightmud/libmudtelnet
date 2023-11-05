@@ -11,17 +11,17 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std as alloc;
 
+use alloc::{format, vec::Vec};
+
+use bytes::{BufMut, Bytes, BytesMut};
+
+pub use bytes;
 pub mod compatibility;
 pub mod events;
 pub mod telnet;
 
-use alloc::{format, vec::Vec};
-pub use bytes;
-
-use crate::telnet::op_command::{DO, DONT, EOR, GA, IAC, NOP, SB, SE, WILL, WONT};
-
-use bytes::{BufMut, Bytes, BytesMut};
 use compatibility::CompatibilityTable;
+use telnet::op_command::{DO, DONT, EOR, GA, IAC, NOP, SB, SE, WILL, WONT};
 
 pub enum EventType {
   None(Bytes),
