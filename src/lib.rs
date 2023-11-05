@@ -455,12 +455,11 @@ impl Parser {
   }
 
   fn process_negotiation(&mut self, command: u8, opt: u8) -> Vec<events::TelnetEvents> {
-    let mut entry = self.options.get_option(opt);
     let event = events::TelnetNegotiation::new(command, opt);
-    match (command, entry) {
+    match (command, self.options.get_option(opt)) {
       (
         WILL,
-        CompatibilityEntry {
+        mut entry @ CompatibilityEntry {
           remote: true,
           remote_state: false,
           ..
@@ -478,7 +477,7 @@ impl Parser {
       }
       (
         WONT,
-        CompatibilityEntry {
+        mut entry @ CompatibilityEntry {
           remote_state: true, ..
         },
       ) => {
@@ -491,7 +490,7 @@ impl Parser {
       }
       (
         DO,
-        CompatibilityEntry {
+        mut entry @ CompatibilityEntry {
           local: true,
           local_state: false,
           ..
@@ -516,7 +515,7 @@ impl Parser {
       }
       (
         DONT,
-        CompatibilityEntry {
+        mut entry @ CompatibilityEntry {
           local_state: true, ..
         },
       ) => {
