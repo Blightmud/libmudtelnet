@@ -30,6 +30,7 @@ pub enum EventType {
   Neg(Bytes),
 }
 
+// TODO(@cpu): Stop exporting this macro.
 #[macro_export]
 /// Macro for calling `Bytes::copy_from_slice()`
 macro_rules! vbytes {
