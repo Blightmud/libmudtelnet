@@ -336,28 +336,27 @@ impl Parser {
     // Splitting is O(1) and doesn't copy the data. Freezing is zero-cost. Taking a slice is O(1).
     let buf = self.buffer.split().freeze();
     for (index, &val) in buf.iter().enumerate() {
-      iter_state = match (&iter_state, val) {
+      // Each loop iteration, look at the current state and the current val to decide
+      // the next state and where the cmd_begin marker should be set.
+      (iter_state, cmd_begin) = match (&iter_state, val) {
         (State::Normal, IAC) => {
           if cmd_begin < index {
             events.push(EventType::None(buf.slice(cmd_begin..index)));
           }
-          cmd_begin = index;
-          State::Iac
+          (State::Iac, index)
         }
-        (State::Iac, IAC) => State::Normal, // Double IAC, ignore,
+        (State::Iac, IAC) => (State::Normal, cmd_begin), // Double IAC, ignore,
         (State::Iac, GA | EOR | NOP) => {
           events.push(EventType::IAC(buf.slice(cmd_begin..=index)));
-          cmd_begin = index + 1;
-          State::Normal
+          (State::Normal, index + 1)
         }
-        (State::Iac, SB) => State::Sub,
-        (State::Iac, _) => State::Neg, // WILL | WONT | DO | DONT | IS | SEND
+        (State::Iac, SB) => (State::Sub, cmd_begin),
+        (State::Iac, _) => (State::Neg, cmd_begin), // WILL | WONT | DO | DONT | IS | SEND
         (State::Neg, _) => {
           events.push(EventType::Neg(buf.slice(cmd_begin..=index)));
-          cmd_begin = index + 1;
-          State::Normal
+          (State::Normal, index + 1)
         }
-        (State::Sub | State::SubIac, IAC) => State::SubIac,
+        (State::Sub | State::SubIac, IAC) => (State::SubIac, cmd_begin),
         (State::SubIac, SE) => {
           let opt = buf[cmd_begin + 2];
           if opt == telnet::op_option::MCCP2 || opt == telnet::op_option::MCCP3 {
@@ -373,18 +372,17 @@ impl Parser {
             buf.slice(cmd_begin..=index),
             None,
           ));
-          cmd_begin = index + 1;
-          State::Normal
+          (State::Normal, index + 1)
         }
-        (State::SubIac, _) => State::Sub,
-        (cur_state, _) => *cur_state,
+        (State::SubIac, _) => (State::Sub, cmd_begin),
+        (cur_state, _) => (*cur_state, cmd_begin),
       };
     }
 
     if cmd_begin < buf.len() {
       match iter_state {
         State::Sub | State::SubIac => {
-          events.push(EventType::SubNegotiation(buf.slice(cmd_begin..), None))
+          events.push(EventType::SubNegotiation(buf.slice(cmd_begin..), None));
         }
         _ => events.push(EventType::None(buf.slice(cmd_begin..))),
       }
