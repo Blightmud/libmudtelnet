@@ -241,10 +241,13 @@ impl Parser {
   /// This method will do nothing if the option is not "supported" remotely via the `CompatibilityTable`.
   pub fn _do(&mut self, option: u8) -> Option<events::TelnetEvents> {
     let opt = self.options.get_option(option);
-    if opt.remote && !opt.remote_state {
-      Some(self.negotiate(DO, option))
-    } else {
-      None
+    match opt {
+      CompatibilityEntry {
+        remote: true,
+        remote_state: false,
+        ..
+      } => Some(self.negotiate(DO, option)),
+      _ => None,
     }
   }
 
