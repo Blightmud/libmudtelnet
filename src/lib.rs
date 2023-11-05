@@ -359,16 +359,18 @@ impl Parser {
         (State::SubOpt { opt } | State::SubIac { opt }, IAC) => {
           (State::SubIac { opt: *opt }, cmd_begin)
         }
-        (State::SubIac { opt }, SE) => {
-          if *opt == telnet::op_option::MCCP2 || *opt == telnet::op_option::MCCP3 {
-            // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
-            events.push(EventType::SubNegotiation(
-              buf.slice(cmd_begin..=index),
-              Some(buf.slice(index + 1..)),
-            ));
-            cmd_begin = buf.len();
-            break;
-          }
+        (State::SubIac { opt }, SE)
+          if *opt == telnet::op_option::MCCP2 || *opt == telnet::op_option::MCCP3 =>
+        {
+          // MCCP2/MCCP3 MUST DECOMPRESS DATA AFTER THIS!
+          events.push(EventType::SubNegotiation(
+            buf.slice(cmd_begin..=index),
+            Some(buf.slice(index + 1..)),
+          ));
+          cmd_begin = buf.len();
+          break;
+        }
+        (State::SubIac { .. }, SE) => {
           events.push(EventType::SubNegotiation(
             buf.slice(cmd_begin..=index),
             None,
