@@ -662,6 +662,11 @@ mod compat_tests {
       }
     }
 
-    //assert_eq!(parser.options, og_parser.options);
+    for i in 0..255 {
+      assert_eq!(
+        parser.options.get_option(i).into_u8(),
+        og_parser.options.get_option(i).into_u8()
+      );
+    }
   }
 }
