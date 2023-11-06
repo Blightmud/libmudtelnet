@@ -104,6 +104,24 @@ pub enum TelnetEvents {
   DecompressImmediate(Bytes),
 }
 
+impl From<TelnetIAC> for TelnetEvents {
+  fn from(iac: TelnetIAC) -> Self {
+    TelnetEvents::IAC(iac)
+  }
+}
+
+impl From<TelnetNegotiation> for TelnetEvents {
+  fn from(neg: TelnetNegotiation) -> Self {
+    TelnetEvents::Negotiation(neg)
+  }
+}
+
+impl From<TelnetSubnegotiation> for TelnetEvents {
+  fn from(sub: TelnetSubnegotiation) -> Self {
+    TelnetEvents::Subnegotiation(sub)
+  }
+}
+
 impl TelnetEvents {
   /// Helper method to generate a `TelnetEvents::DataSend`.
   #[deprecated(since = "0.2.1", note = "Construct enum variant directly or use into.")]

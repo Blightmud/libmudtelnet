@@ -272,3 +272,88 @@ fn test_into_bytes() {
   let bytes = libmudtelnet::events::TelnetIAC::new(cmd::IAC).to_bytes();
   assert!(!bytes.is_empty())
 }
+
+#[cfg(test)]
+mod compat_tests {
+  use compat::{test_app, TelnetApplication};
+
+  #[test]
+  fn test_parser_diff1() {
+    test_app(&TelnetApplication {
+      options: vec![(255, 254)],
+      received_data: vec![vec![255, 255, 255, 255, 255, 254, 255, 0]],
+    });
+  }
+
+  #[test]
+  fn test_parser_diff2() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![45, 255, 250, 255]],
+    });
+  }
+
+  #[test]
+  fn test_parser_diff3() {
+    test_app(&TelnetApplication {
+      options: vec![(0, 1)],
+      received_data: vec![vec![255, 253, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff4() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255, 250, 255, 255, 240, 250]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff5() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255, 250, 255, 240, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff6() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![240, 255, 250, 255, 240, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff7() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff8() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![255, 252, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff9() {
+    test_app(&TelnetApplication {
+      options: vec![],
+      received_data: vec![vec![254, 255, 255, 255, 254, 0]],
+    })
+  }
+
+  #[test]
+  fn test_parser_diff10() {
+    test_app(&TelnetApplication {
+      options: vec![(255, 254), (1, 0)],
+      received_data: vec![vec![255, 253, 255]],
+    })
+  }
+}

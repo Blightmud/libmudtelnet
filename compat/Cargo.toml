@@ -1,0 +1,10 @@
+[package]
+name = "compat"
+description = "helpers for testing compatibility with libtelnet-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+arbitrary = { version = "1", optional = true, features = ["derive"] }
+libtelnet-rs = "2.0.0"
+libmudtelnet = { path = ".." }
