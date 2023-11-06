@@ -7,6 +7,7 @@ use crate::Parser;
 
 /// A struct representing a 2 byte IAC sequence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct TelnetIAC {
   pub command: u8,
 }
@@ -32,6 +33,7 @@ impl TelnetIAC {
 
 /// A struct representing a 3 byte IAC sequence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "arbitrary", derive(arbitrary::Arbitrary))]
 pub struct TelnetNegotiation {
   pub command: u8,
   pub option: u8,
@@ -61,6 +63,18 @@ impl TelnetNegotiation {
 pub struct TelnetSubnegotiation {
   pub option: u8,
   pub buffer: Bytes,
+}
+
+#[cfg(feature = "arbitrary")]
+impl<'a> arbitrary::Arbitrary<'a> for TelnetSubnegotiation {
+  fn arbitrary(u: &mut arbitrary::Unstructured<'a>) -> arbitrary::Result<Self> {
+    let option = u.arbitrary()?;
+    let buffer: Vec<u8> = u.arbitrary()?;
+    Ok(Self {
+      option,
+      buffer: Bytes::from(buffer),
+    })
+  }
 }
 
 impl TelnetSubnegotiation {

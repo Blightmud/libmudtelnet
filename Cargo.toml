@@ -14,9 +14,10 @@ exclude = ["docs/**", ".github/**"]
 
 [dependencies]
 bytes = "1.1.0"
+arbitrary = { version = "1", optional = true, features = ["derive"] }
 
 [dev-dependencies]
-compat = { path = "compat" }
+compat = { path = "compat", features = ["arbitrary"] }
 
 [features]
 default = ["std"]
