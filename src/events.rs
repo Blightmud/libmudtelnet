@@ -1,6 +1,9 @@
+use alloc::vec::Vec;
+
+use bytes::{BufMut, Bytes, BytesMut};
+
 use crate::telnet::op_command::{IAC, SB, SE};
 use crate::Parser;
-use bytes::{BufMut, Bytes, BytesMut};
 
 /// A struct representing a 2 byte IAC sequence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
