@@ -13,4 +13,13 @@ name = "libmudtelnet"
 version = "2.0.1"
 dependencies = [
  "bytes",
+ "libtelnet-rs",
+]
+
+[[package]]
+name = "libtelnet-rs"
+version = "2.0.0"
+source = "git+https://github.com/cpu/libtelnet-rs?rev=f127040a8419c92c034dee2ff331137d21dc1940#f127040a8419c92c034dee2ff331137d21dc1940"
+dependencies = [
+ "bytes",
 ]

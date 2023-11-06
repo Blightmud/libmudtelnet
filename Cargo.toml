@@ -15,6 +15,12 @@ exclude = ["docs/**", ".github/**"]
 [dependencies]
 bytes = "1.1.0"
 
+[dev-dependencies]
+libtelnet-rs = "2.0.0" # For compatibility testing.
+
 [features]
 default = ["std"]
 std = []
+
+[patch.crates-io]
+libtelnet-rs = { git = "https://github.com/cpu/libtelnet-rs", rev ="f127040a8419c92c034dee2ff331137d21dc1940" }

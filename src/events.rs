@@ -1,26 +1,11 @@
 use crate::telnet::op_command::{IAC, SB, SE};
 use crate::Parser;
-use alloc::vec::Vec;
 use bytes::{BufMut, Bytes, BytesMut};
-
-// TODO(@cpu): are some of these From<x> for Vec<u8> necessary since Bytes implements From<Vec<u8>>?
 
 /// A struct representing a 2 byte IAC sequence.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct TelnetIAC {
   pub command: u8,
-}
-
-impl From<TelnetIAC> for Bytes {
-  fn from(val: TelnetIAC) -> Self {
-    Bytes::copy_from_slice(&[IAC, val.command])
-  }
-}
-
-impl From<TelnetIAC> for Vec<u8> {
-  fn from(val: TelnetIAC) -> Self {
-    val.into()
-  }
 }
 
 impl TelnetIAC {
@@ -31,8 +16,14 @@ impl TelnetIAC {
 
   /// Consume the sequence struct and return the bytes.
   #[must_use]
-  pub fn into_bytes(self) -> Vec<u8> {
-    self.into()
+  pub fn to_bytes(self) -> Bytes {
+    Bytes::copy_from_slice(&[IAC, self.command])
+  }
+
+  #[must_use]
+  #[deprecated(since = "0.2.1", note = "Use `to_bytes` instead.")]
+  pub fn into_bytes(self) -> Bytes {
+    self.to_bytes()
   }
 }
 
@@ -43,18 +34,6 @@ pub struct TelnetNegotiation {
   pub option: u8,
 }
 
-impl From<TelnetNegotiation> for Bytes {
-  fn from(val: TelnetNegotiation) -> Self {
-    Bytes::copy_from_slice(&[IAC, val.command, val.option])
-  }
-}
-
-impl From<TelnetNegotiation> for Vec<u8> {
-  fn from(val: TelnetNegotiation) -> Self {
-    val.into()
-  }
-}
-
 impl TelnetNegotiation {
   #[must_use]
   pub fn new(command: u8, option: u8) -> Self {
@@ -63,8 +42,14 @@ impl TelnetNegotiation {
 
   /// Consume the sequence struct and return the bytes.
   #[must_use]
-  pub fn into_bytes(self) -> Vec<u8> {
-    self.into()
+  pub fn to_bytes(self) -> Bytes {
+    Bytes::copy_from_slice(&[IAC, self.command, self.option])
+  }
+
+  #[must_use]
+  #[deprecated(since = "0.2.1", note = "Use `to_bytes` instead.")]
+  pub fn into_bytes(self) -> Bytes {
+    self.to_bytes()
   }
 }
 
@@ -75,10 +60,15 @@ pub struct TelnetSubnegotiation {
   pub buffer: Bytes,
 }
 
-impl From<TelnetSubnegotiation> for Bytes {
-  fn from(val: TelnetSubnegotiation) -> Self {
-    let head = [IAC, SB, val.option];
-    let parsed = &Parser::escape_iac(val.buffer)[..];
+impl TelnetSubnegotiation {
+  pub fn new(option: u8, buffer: Bytes) -> Self {
+    Self { option, buffer }
+  }
+
+  #[must_use]
+  pub fn to_bytes(self) -> Bytes {
+    let head = [IAC, SB, self.option];
+    let parsed = &Parser::escape_iac(self.buffer)[..];
     let tail = [IAC, SE];
     let mut buf = BytesMut::with_capacity(head.len() + parsed.len() + tail.len());
     buf.put(&head[..]);
@@ -86,25 +76,11 @@ impl From<TelnetSubnegotiation> for Bytes {
     buf.put(&tail[..]);
     buf.freeze()
   }
-}
 
-impl From<TelnetSubnegotiation> for Vec<u8> {
-  fn from(val: TelnetSubnegotiation) -> Self {
-    // TODO(@cpu): Something fishy going on here - using a more direct approach is causing
-    //             infinite recursion from weird type inference (I think)
-    let b: Bytes = val.into();
-    b.to_vec()
-  }
-}
-
-impl TelnetSubnegotiation {
-  pub fn new(option: u8, buffer: Bytes) -> Self {
-    Self { option, buffer }
-  }
-
-  /// Consume the sequence struct and return the bytes.
-  pub fn into_bytes(self) -> Vec<u8> {
-    self.into()
+  #[must_use]
+  #[deprecated(since = "0.2.1", note = "Use `to_bytes` instead.")]
+  pub fn into_bytes(self) -> Bytes {
+    self.to_bytes()
   }
 }
 
@@ -125,12 +101,45 @@ pub enum TelnetEvents {
   DecompressImmediate(Bytes),
 }
 
-impl From<TelnetEvents> for Bytes {
-  fn from(val: TelnetEvents) -> Self {
-    match val {
-      TelnetEvents::IAC(iac) => iac.into(),
-      TelnetEvents::Negotiation(neg) => neg.into(),
-      TelnetEvents::Subnegotiation(sub) => sub.into(),
+impl TelnetEvents {
+  /// Helper method to generate a `TelnetEvents::DataSend`.
+  #[deprecated(since = "0.2.1", note = "Construct enum variant directly or use into.")]
+  pub fn build_send(buffer: Bytes) -> Self {
+    TelnetEvents::DataSend(buffer)
+  }
+
+  /// Helper method to generate a `TelnetEvents::DataReceive`.
+  #[deprecated(since = "0.2.1", note = "Construct enum variant directly or use into.")]
+  pub fn build_receive(buffer: Bytes) -> Self {
+    TelnetEvents::DataReceive(buffer)
+  }
+
+  /// Helper method to generate a `TelnetEvents::IAC`.
+  #[must_use]
+  #[deprecated(since = "0.2.1", note = "Construct enum variant directly or use into.")]
+  pub fn build_iac(command: u8) -> TelnetEvents {
+    TelnetEvents::IAC(TelnetIAC::new(command))
+  }
+
+  /// Helper method to generate a `TelnetEvents::Negotiation`.
+  #[must_use]
+  #[deprecated(since = "0.2.1", note = "Construct enum variant directly or use into.")]
+  pub fn build_negotiation(command: u8, option: u8) -> Self {
+    TelnetEvents::Negotiation(TelnetNegotiation::new(command, option))
+  }
+
+  /// Helper method to generate a `TelnetEvents::Subnegotiation`.
+  #[deprecated(since = "0.2.1", note = "Construct enum variant directly or use into.")]
+  pub fn build_subnegotiation(option: u8, buffer: Bytes) -> Self {
+    TelnetEvents::Subnegotiation(TelnetSubnegotiation::new(option, buffer))
+  }
+
+  #[must_use]
+  pub fn to_bytes(self) -> Bytes {
+    match self {
+      TelnetEvents::IAC(iac) => iac.to_bytes(),
+      TelnetEvents::Negotiation(neg) => neg.to_bytes(),
+      TelnetEvents::Subnegotiation(sub) => sub.to_bytes(),
       TelnetEvents::DataReceive(data)
       | TelnetEvents::DataSend(data)
       | TelnetEvents::DecompressImmediate(data) => data,
@@ -138,32 +147,47 @@ impl From<TelnetEvents> for Bytes {
   }
 }
 
-// TODO(@cpu): these are (IMO) probably too low-utility to be worth it.
-impl TelnetEvents {
-  /// Helper method to generate a `TelnetEvents::DataSend`.
-  pub fn build_send(buffer: Bytes) -> Self {
-    TelnetEvents::DataSend(buffer)
+/*
+TODO(@cpu): remove/retool this stuff in breaking release.
+*/
+#[allow(clippy::from_over_into)]
+impl Into<Bytes> for TelnetIAC {
+  fn into(self) -> Bytes {
+    self.to_bytes()
   }
+}
 
-  /// Helper method to generate a `TelnetEvents::DataReceive`.
-  pub fn build_receive(buffer: Bytes) -> Self {
-    TelnetEvents::DataReceive(buffer)
+#[allow(clippy::from_over_into)]
+impl Into<Vec<u8>> for TelnetIAC {
+  fn into(self) -> Vec<u8> {
+    self.to_bytes().into()
   }
+}
 
-  /// Helper method to generate a `TelnetEvents::IAC`.
-  #[must_use]
-  pub fn build_iac(command: u8) -> TelnetEvents {
-    TelnetEvents::IAC(TelnetIAC::new(command))
+#[allow(clippy::from_over_into)]
+impl Into<Bytes> for TelnetNegotiation {
+  fn into(self) -> Bytes {
+    self.to_bytes()
   }
+}
 
-  /// Helper method to generate a `TelnetEvents::Negotiation`.
-  #[must_use]
-  pub fn build_negotiation(command: u8, option: u8) -> Self {
-    TelnetEvents::Negotiation(TelnetNegotiation::new(command, option))
+#[allow(clippy::from_over_into)]
+impl Into<Vec<u8>> for TelnetNegotiation {
+  fn into(self) -> Vec<u8> {
+    self.to_bytes().into()
   }
+}
 
-  /// Helper method to generate a `TelnetEvents::Subnegotiation`.
-  pub fn build_subnegotiation(option: u8, buffer: Bytes) -> Self {
-    TelnetEvents::Subnegotiation(TelnetSubnegotiation::new(option, buffer))
+#[allow(clippy::from_over_into)]
+impl Into<Bytes> for TelnetSubnegotiation {
+  fn into(self) -> Bytes {
+    self.to_bytes()
+  }
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<Vec<u8>> for TelnetSubnegotiation {
+  fn into(self) -> Vec<u8> {
+    self.to_bytes().into()
   }
 }

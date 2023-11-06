@@ -116,7 +116,7 @@ fn test_parser() {
   );
   assert_eq!(
     handle_events(instance.receive(
-      &TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}")).into_bytes()
+      &TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}")).to_bytes()
     ),),
     events![Event::SUBNEGOTIATION]
   );
@@ -125,7 +125,7 @@ fn test_parser() {
       instance.receive(
         &[
           &TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}"))
-            .into_bytes()[..],
+            .to_bytes()[..],
           b"Random text",
           &[cmd::IAC, cmd::GA][..]
         ]
@@ -138,7 +138,7 @@ fn test_parser() {
     handle_events(
       instance.receive(
         &[
-          &TelnetSubnegotiation::new(opt::MCCP2, Bytes::copy_from_slice(b" ")).into_bytes()[..],
+          &TelnetSubnegotiation::new(opt::MCCP2, Bytes::copy_from_slice(b" ")).to_bytes()[..],
           b"This is compressed data",
           &[cmd::IAC, cmd::GA][..]
         ]
@@ -265,4 +265,10 @@ fn test_bad_subneg_dbuffer() {
   let opts = CompatibilityTable::from_options(&[(cmd::IAC, entry.into_u8())]);
   // Receive a malformed subnegotiation - this should not panic.
   Parser::with_support(opts).receive(&[cmd::IAC, cmd::SB, cmd::IAC, cmd::SE]);
+}
+
+#[test]
+fn test_into_bytes() {
+  let bytes = libmudtelnet::events::TelnetIAC::new(cmd::IAC).to_bytes();
+  assert!(!bytes.is_empty())
 }
