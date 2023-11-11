@@ -32,7 +32,10 @@ enum EventType {
   Neg(Bytes),
 }
 
-// TODO(@cpu): Stop exporting this macro.
+#[deprecated(
+  since = "0.2.1",
+  note = "Use `Bytes::copy_from_slice` directly instead."
+)]
 #[macro_export]
 /// Macro for calling `Bytes::copy_from_slice()`
 macro_rules! vbytes {
