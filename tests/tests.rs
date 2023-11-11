@@ -9,12 +9,12 @@ use libmudtelnet::Parser;
 
 #[derive(PartialEq, Debug)]
 enum Event {
-  IAC,
-  NEGOTIATION,
-  SUBNEGOTIATION,
-  RECV,
-  SEND,
-  DECOM,
+  Iac,
+  Negotiation,
+  Subnegotiation,
+  Recv,
+  Send,
+  Decom,
 }
 
 macro_rules! events {
@@ -61,30 +61,30 @@ fn handle_events(event_list: Vec<TelnetEvents>) -> CapturedEvents {
     match event {
       TelnetEvents::IAC(ev) => {
         println!("IAC: {}", ev.command);
-        events.push(Event::IAC);
+        events.push(Event::Iac);
       }
       TelnetEvents::Negotiation(ev) => {
         println!("Negotiation: {} {}", ev.command, ev.option);
-        events.push(Event::NEGOTIATION);
+        events.push(Event::Negotiation);
       }
       TelnetEvents::Subnegotiation(ev) => {
         println!("Subnegotiation: {} {:?}", ev.option, ev.buffer);
-        events.push(Event::SUBNEGOTIATION);
+        events.push(Event::Subnegotiation);
       }
       TelnetEvents::DataReceive(buffer) => {
         println!(
           "Receive: {}",
           std::str::from_utf8(&buffer[..]).unwrap_or("Bad utf-8 bytes")
         );
-        events.push(Event::RECV);
+        events.push(Event::Recv);
       }
       TelnetEvents::DataSend(buffer) => {
         println!("Send: {:?}", buffer);
-        events.push(Event::SEND);
+        events.push(Event::Send);
       }
       TelnetEvents::DecompressImmediate(buffer) => {
         println!("DECOMPRESS: {:?}", buffer);
-        events.push(Event::DECOM);
+        events.push(Event::Decom);
       }
     };
   }
@@ -97,14 +97,14 @@ fn test_parser() {
   instance.options.support_local(opt::GMCP);
   instance.options.support_local(opt::MCCP2);
   if let Some(ev) = instance._will(opt::GMCP) {
-    assert_eq!(handle_events(vec![ev]), events![Event::SEND]);
+    assert_eq!(handle_events(vec![ev]), events![Event::Send]);
   }
   if let Some(ev) = instance._will(opt::MCCP2) {
-    assert_eq!(handle_events(vec![ev]), events![Event::SEND]);
+    assert_eq!(handle_events(vec![ev]), events![Event::Send]);
   }
   assert_eq!(
     handle_events(instance.receive(&[b"Hello, rust!", &[cmd::IAC, cmd::GA][..]].concat())),
-    events![Event::RECV, Event::IAC]
+    events![Event::Recv, Event::Iac]
   );
   assert_eq!(
     handle_events(instance.receive(&[cmd::IAC, cmd::DO, opt::GMCP])),
@@ -112,13 +112,13 @@ fn test_parser() {
   );
   assert_eq!(
     handle_events(instance.receive(&[&[cmd::IAC, cmd::DO, 200][..], b"Some random data"].concat())),
-    events![Event::SEND, Event::RECV]
+    events![Event::Send, Event::Recv]
   );
   assert_eq!(
     handle_events(instance.receive(
       &TelnetSubnegotiation::new(opt::GMCP, Bytes::copy_from_slice(b"Core.Hello {}")).to_bytes()
     ),),
-    events![Event::SUBNEGOTIATION]
+    events![Event::Subnegotiation]
   );
   assert_eq!(
     handle_events(
@@ -132,7 +132,7 @@ fn test_parser() {
         .concat()
       ),
     ),
-    events![Event::SUBNEGOTIATION, Event::RECV, Event::IAC]
+    events![Event::Subnegotiation, Event::Recv, Event::Iac]
   );
   assert_eq!(
     handle_events(
@@ -145,7 +145,7 @@ fn test_parser() {
         .concat()
       ),
     ),
-    events![Event::SUBNEGOTIATION, Event::DECOM]
+    events![Event::Subnegotiation, Event::Decom]
   );
   assert_eq!(
     // TODO(@cpu): Can data be made easier to understand at a glance?
@@ -153,7 +153,7 @@ fn test_parser() {
       87, 104, 97, 116, 32, 105, 115, 32, 121, 111, 117, 114, 32, 112, 97, 115, 115, 119, 111, 114,
       100, 63, 32, 255, 239, 255, 251, 1
     ])),
-    events![Event::RECV, Event::IAC, Event::SEND]
+    events![Event::Recv, Event::Iac, Event::Send]
   );
 }
 
@@ -182,7 +182,7 @@ fn test_subneg_separate_receives() {
     ]
     .concat(),
   );
-  assert_eq!(handle_events(events), events![Event::SUBNEGOTIATION]);
+  assert_eq!(handle_events(events), events![Event::Subnegotiation]);
 
   events = instance.receive(
     &[
@@ -191,7 +191,7 @@ fn test_subneg_separate_receives() {
     ]
     .concat(),
   );
-  assert_eq!(handle_events(events), events![Event::SUBNEGOTIATION]);
+  assert_eq!(handle_events(events), events![Event::Subnegotiation]);
 }
 
 // Test that receiving a subnegotiation with embedded UTF-8 content works correctly,
