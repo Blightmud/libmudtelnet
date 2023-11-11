@@ -6,6 +6,7 @@ macro_rules! u8_const {
 }
 
 /// Module containing constants for Telnet Command codes.
+// TODO(XXX): rename to cmd.
 pub mod op_command {
   u8_const!(IAC, 255);
   u8_const!(WILL, 251);
@@ -22,6 +23,7 @@ pub mod op_command {
 }
 
 /// Module containing constants for Telnet Option codes.
+// TODO(XXX): rename to opt.
 pub mod op_option {
   u8_const!(BINARY, 0);
   u8_const!(ECHO, 1);
