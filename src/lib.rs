@@ -141,14 +141,28 @@ impl Parser {
   where
     Bytes: From<T>,
   {
+    #[derive(Debug, Clone, Copy)]
+    enum States {
+      Normal,
+      Iac,
+    }
+
     let data = Bytes::from(data);
     let mut res = BytesMut::with_capacity(data.len());
-    for pair in data.chunks(2) {
-      match pair {
-        [IAC, IAC] => res.put_u8(IAC),
-        _ => res.put(pair),
+
+    let mut state = States::Normal;
+    let mut out_val;
+    for val in data {
+      (state, out_val) = match (state, val) {
+        (States::Normal, IAC) => (States::Iac, Some(val)),
+        (States::Iac, IAC) => (States::Normal, None),
+        (States::Normal | States::Iac, _) => (States::Normal, Some(val)),
+      };
+      if let Some(val) = out_val {
+        res.put_u8(val);
       }
     }
+
     res.freeze()
   }
 

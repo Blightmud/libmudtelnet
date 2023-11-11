@@ -80,7 +80,7 @@ dependencies = [
 [[package]]
 name = "libtelnet-rs"
 version = "2.0.0"
-source = "git+https://github.com/cpu/libtelnet-rs?branch=cpu-libmudtelnet-compat#f127040a8419c92c034dee2ff331137d21dc1940"
+source = "git+https://github.com/cpu/libtelnet-rs?branch=cpu-libmudtelnet-compat#9e66f6336711503bd30fec1459c0087d1951b48e"
 dependencies = [
  "bytes",
 ]

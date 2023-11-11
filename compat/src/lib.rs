@@ -49,3 +49,18 @@ pub fn event(event: OgTelnetEvents) -> TelnetEvents {
     OgTelnetEvents::DecompressImmediate(data) => TelnetEvents::DecompressImmediate(data),
   }
 }
+
+pub fn test_escape(data: Vec<u8>) {
+  // For any input if we escape it, and then unescape it, we should get back the original data.
+  let escaped = Parser::escape_iac(data.clone());
+  let unescaped = Parser::unescape_iac(escaped.clone());
+  assert_eq!(data, unescaped);
+
+  // The same should be true for the original implementation.
+  let og_escaped = OgParser::escape_iac(data.clone());
+  let og_unescaped = OgParser::unescape_iac(og_escaped.clone());
+  assert_eq!(data, og_unescaped);
+
+  // And we expect the new and old implementation produce the same escaped output.
+  assert_eq!(escaped, og_escaped);
+}

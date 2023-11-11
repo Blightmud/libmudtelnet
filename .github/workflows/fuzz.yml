@@ -22,3 +22,6 @@ jobs:
       - name: Fuzz TelnetParser receive
         # Run the fuzzer for 60 seconds before giving up.
         run: cargo fuzz run receive -- -max_total_time=60
+      - name: Fuzz TelnetParser IAC escaping
+        # Run the fuzzer for 60 seconds before giving up.
+        run: cargo fuzz run escape -- -max_total_time=60

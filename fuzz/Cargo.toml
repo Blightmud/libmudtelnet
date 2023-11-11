@@ -27,6 +27,12 @@ path = "parser/receive.rs"
 test = false
 doc = false
 
+[[bin]]
+name = "escape"
+path = "parser/escape.rs"
+test = false
+doc = false
+
 [patch.crates-io]
 libtelnet-rs = { git = "https://github.com/cpu/libtelnet-rs", branch = "cpu-libmudtelnet-compat" }
 

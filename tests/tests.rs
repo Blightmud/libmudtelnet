@@ -293,6 +293,24 @@ fn test_unescape() {
 }
 
 #[test]
+fn test_escape_roundtrip_bug_one() {
+  // The original libtelnet-rs mishandles this input:
+  let data = vec![cmd::IAC, cmd::IAC, 228];
+  let escaped = Parser::escape_iac(data.clone());
+  let unescaped = Parser::unescape_iac(escaped);
+  assert_eq!(unescaped, data);
+}
+
+#[test]
+fn test_escape_roundtrip_bug_two() {
+  // The original libtelnet-rs mishandles this input:
+  let data = vec![228, cmd::IAC, cmd::IAC];
+  let escaped = Parser::escape_iac(data.clone());
+  let unescaped = Parser::unescape_iac(escaped);
+  assert_eq!(unescaped, data);
+}
+
+#[test]
 fn test_bad_subneg_dbuffer() {
   // Configure opt 0xFF (IAC) as local supported, and local state enabled.
   let entry = CompatibilityEntry::new(true, false, true, false);
