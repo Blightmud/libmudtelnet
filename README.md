@@ -1,15 +1,12 @@
-[![Rust](https://github.com/cpu/libmudtelnet/workflows/Rust/badge.svg?branch=master)](https://github.com/cpu/libmudtelnet)
-[![Crates.io](https://img.shields.io/crates/v/libmudtelnet)](https://crates.io/crates/libmudtelnet)
-[![Docs.rs](https://docs.rs/libmudtelnet/badge.svg)](https://docs.rs/libmudtelnet)
+[![Build & Test][github-actions-badge]][github-actions-link]
+[![crates.io][crate-badge]][crate-link]
+[![Docs][docs-badge]][docs-link]
 
 # libmudtelnet
 
 A low-level Telnet protocol implementation for MUD clients, written in Rust.
 
 `libmudtelnet` is a fork of [libtelnet-rs], which is itself inspired by the [libtelnet].
-
-[libtelnet-rs]: https://github.com/envis10n/libtelnet-rs
-[libtelnet]: https://github.com/seanmiddleditch/libtelnet
 
 # Changelog
 
@@ -35,12 +32,6 @@ properly for the telnet protocol. Data to be sent will be provided either by
 a `events::TelnetEvents::DataSend` event after processing, or as a return from
 any method used for sending data.
 
-[Blightmud]: https://github.com/blightmud/blightmud
-[new-parser]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.new
-[receive]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.receive
-[telnet events]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/events/enum.TelnetEvents.html
-[send-text]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.send_text
-
 # Compatibility
 
 The initial release of `libmudtelnet` has been tested for compatibility with
@@ -58,5 +49,18 @@ Many thanks to:
 * [envis10n] for his work on [libtelnet-rs], which `libmudtelnet` is forked from.
 * [Sean Middleditch] for his work on [libtelnet], which inspired `libtelent-rs`.
 
+[github-actions-badge]: https://img.shields.io/github/actions/workflow/status/cpu/libmudtelnet/rust.yml?label=build%20%26%20tests&logo=github&style=for-the-badge&branch=main
+[github-actions-link]: https://github.com/cpu/libmudtelnet/actions/workflows/rust.yml?query=branch%3Amain
+[crate-badge]: https://img.shields.io/crates/v/libmudtelnet.svg?style=for-the-badge
+[crate-link]: https://crates.io/crates/libmudtelnet
+[docs-badge]: https://img.shields.io/badge/docs-rs-blue.svg?style=for-the-badge
+[docs-link]: https://docs.rs/libmudtelnet
+[libtelnet-rs]: https://github.com/envis10n/libtelnet-rs
+[libtelnet]: https://github.com/seanmiddleditch/libtelne
+[Blightmud]: https://github.com/blightmud/blightmud
+[new-parser]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.new
+[receive]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.receive
+[telnet events]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/events/enum.TelnetEvents.html
+[send-text]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.send_text
 [envis10n]: https://github.com/envis10n/
 [Sean Middleditch]: https://github.com/seanmiddleditch/
