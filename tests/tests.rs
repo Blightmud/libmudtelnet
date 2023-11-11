@@ -235,7 +235,7 @@ fn test_subneg_utf8_content() {
 /// Test escaping IAC bytes in a buffer.
 #[test]
 fn test_escape() {
-  let a = vec![
+  let initial = vec![
     cmd::IAC,
     cmd::SB,
     201,
@@ -258,13 +258,14 @@ fn test_escape() {
     cmd::IAC,
     cmd::SE,
   ]);
-  assert_eq!(expected, Parser::escape_iac(a))
+  assert_eq!(expected, Parser::escape_iac(initial.clone()));
+  assert_eq!(initial, Parser::unescape_iac(expected));
 }
 
 /// Test unescaping IAC bytes in a buffer.
 #[test]
 fn test_unescape() {
-  let a = vec![
+  let initial = vec![
     cmd::IAC,
     cmd::IAC,
     cmd::SB,
@@ -287,7 +288,8 @@ fn test_unescape() {
     cmd::IAC,
     cmd::SE,
   ]);
-  assert_eq!(expected, Parser::unescape_iac(a))
+  assert_eq!(expected, Parser::unescape_iac(initial.clone()));
+  assert_eq!(initial, Parser::escape_iac(expected));
 }
 
 #[test]
