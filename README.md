@@ -8,8 +8,6 @@ A low-level Telnet protocol implementation for MUD clients, written in Rust.
 
 `libmudtelnet` is a fork of [libtelnet-rs], which is itself inspired by the [libtelnet].
 
-A [libtelnet]-inspired telnet parser for Rust.
-
 [libtelnet-rs]: https://github.com/envis10n/libtelnet-rs
 [libtelnet]: https://github.com/seanmiddleditch/libtelnet
 
@@ -45,10 +43,13 @@ any method used for sending data.
 
 # Compatibility
 
-The initial release of `libmudtelnet` has been tested for compatibility with `libtelnet-rs`. In general
-while much of the code has been rewritten to be more idiomatic Rust, the API is the same and break
-changes have been avoided. An upcoming semver incompatible release will be made with broader API changes
-in the near future.
+The initial release of `libmudtelnet` has been tested for compatibility with
+`libtelnet-rs`. In general while much of the code has been rewritten to be more
+idiomatic Rust, the API is the same and breaking changes have been avoided. An
+upcoming semver incompatible release will be made with broader API changes in
+the near future.
+
+See [CHANGELOG.md](CHANGELOG.md) for more details.
 
 # Credits
 

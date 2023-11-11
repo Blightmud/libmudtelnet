@@ -8,15 +8,21 @@ Initial release of `libmudtelnet` - a fork of `libtelnet-rs`.
   byte during Telnet subnegotiation processing.
 * Fixed a panic when Telnet option code 0xFF is negotiated, and a truncated 
   subnegotiation (e.g. `IAC SB IAC SE`) is received.
+* Multiple escaped `IAC` bytes (`e.g. IAC IAC IAC IAC`) are now properly 
+ unescaped (e.g. `IAC IAC`) instead of truncated (e.g. `IAC`). 
 
 ## Features
 
 * Many API types now derive helpful traits (`Debug`, `Eq`, etc.).
+* An optional `arbitrary` crate feature is now available to enable generating 
+  arbitrary `event::TelnetIAC`, `event::TelnetNegotiation` and `event::TelnetSubnegotiation` 
+  instances for testing.
 
 ## Misc
 
 * CI improvements.
 * Fuzz testing.
+* Simple benchmarking.
 * Small performance and safety improvements (avoiding direct indexing, etc.).
 
 # v2.0.0
