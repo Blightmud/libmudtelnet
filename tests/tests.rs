@@ -235,16 +235,58 @@ fn test_subneg_utf8_content() {
 /// Test escaping IAC bytes in a buffer.
 #[test]
 fn test_escape() {
-  let a = vec![255, 250, 201, 255, 205, 202, 255, 240];
-  let expected = Bytes::copy_from_slice(&[255, 255, 250, 201, 255, 255, 205, 202, 255, 255, 240]);
+  let a = vec![
+    cmd::IAC,
+    cmd::SB,
+    201,
+    cmd::IAC,
+    205,
+    202,
+    cmd::IAC,
+    cmd::SE,
+  ];
+  let expected = Bytes::copy_from_slice(&[
+    cmd::IAC,
+    cmd::IAC,
+    cmd::SB,
+    201,
+    cmd::IAC,
+    cmd::IAC,
+    205,
+    202,
+    cmd::IAC,
+    cmd::IAC,
+    cmd::SE,
+  ]);
   assert_eq!(expected, Parser::escape_iac(a))
 }
 
 /// Test unescaping IAC bytes in a buffer.
 #[test]
 fn test_unescape() {
-  let a = vec![255, 255, 250, 201, 255, 255, 205, 202, 255, 255, 240];
-  let expected = Bytes::copy_from_slice(&[255, 250, 201, 255, 205, 202, 255, 240]);
+  let a = vec![
+    cmd::IAC,
+    cmd::IAC,
+    cmd::SB,
+    201,
+    cmd::IAC,
+    cmd::IAC,
+    205,
+    202,
+    cmd::IAC,
+    cmd::IAC,
+    cmd::SE,
+  ];
+  let expected = Bytes::copy_from_slice(&[
+    cmd::IAC,
+    cmd::SB,
+    201,
+    cmd::IAC,
+    205,
+    202,
+    cmd::IAC,
+    cmd::SE,
+  ]);
   assert_eq!(expected, Parser::unescape_iac(a))
 }
 
