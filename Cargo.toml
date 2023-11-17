@@ -4,8 +4,8 @@ description = "low-level Telnet protocol implementation for MUD clients"
 version = "2.0.1"
 edition = "2018"
 readme = "README.md"
-homepage = "https://github.com/cpu/libmudtelnet"
-repository = "https://github.com/cpu/libmudtelnet"
+homepage = "https://github.com/blightmud/libmudtelnet"
+repository = "https://github.com/blightmud/libmudtelnet"
 documentation = "https://docs.rs/libmudtelnet"
 license = "MIT"
 keywords = ["telnet", "libtelnet", "mud"]
@@ -24,4 +24,7 @@ default = ["std"]
 std = []
 
 [patch.crates-io]
+# We use a fork of libtelnet-rs that has a few patches applied to it to fix bugs also fixed in this repo. If we use
+# the vanilla upstream 2.0.0 release our fuzzing/interop testing will fail when we encounter input that tickles
+# these unfixed bugs.
 libtelnet-rs = { git = "https://github.com/cpu/libtelnet-rs", branch = "cpu-libmudtelnet-compat" }

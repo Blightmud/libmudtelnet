@@ -49,8 +49,8 @@ Many thanks to:
 * [envis10n] for his work on [libtelnet-rs], which `libmudtelnet` is forked from.
 * [Sean Middleditch] for his work on [libtelnet], which inspired `libtelent-rs`.
 
-[github-actions-badge]: https://img.shields.io/github/actions/workflow/status/cpu/libmudtelnet/rust.yml?label=build%20%26%20tests&logo=github&style=for-the-badge&branch=main
-[github-actions-link]: https://github.com/cpu/libmudtelnet/actions/workflows/rust.yml?query=branch%3Amain
+[github-actions-badge]: https://img.shields.io/github/actions/workflow/status/blightmud/libmudtelnet/rust.yml?label=build%20%26%20tests&logo=github&style=for-the-badge&branch=main
+[github-actions-link]: https://github.com/blightmud/libmudtelnet/actions/workflows/rust.yml?query=branch%3Amain
 [crate-badge]: https://img.shields.io/crates/v/libmudtelnet.svg?style=for-the-badge
 [crate-link]: https://crates.io/crates/libmudtelnet
 [docs-badge]: https://img.shields.io/badge/docs-rs-blue.svg?style=for-the-badge
