@@ -15,7 +15,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 # Usage
 
 Check [src/tests.rs](tests/tests.rs) for an example parser. For a larger
-example, see the [Blightmud] MUD client that uses `libtelnet-rs` for its Telnet
+example, see the [Blightmud] MUD client that uses `libmudtelnet` for its Telnet
 handling.
 
 First, construct a parser with [`Parser::new()`][new-parser]. Ideally, you would
