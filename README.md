@@ -47,7 +47,7 @@ See [CHANGELOG.md](CHANGELOG.md) for more details.
 Many thanks to:
 
 * [envis10n] for his work on [libtelnet-rs], which `libmudtelnet` is forked from.
-* [Sean Middleditch] for his work on [libtelnet], which inspired `libtelent-rs`.
+* [Sean Middleditch] for his work on [libtelnet], which inspired `libtelnet-rs`.
 
 [github-actions-badge]: https://img.shields.io/github/actions/workflow/status/blightmud/libmudtelnet/rust.yml?label=build%20%26%20tests&logo=github&style=for-the-badge&branch=main
 [github-actions-link]: https://github.com/blightmud/libmudtelnet/actions/workflows/rust.yml?query=branch%3Amain
@@ -58,9 +58,9 @@ Many thanks to:
 [libtelnet-rs]: https://github.com/envis10n/libtelnet-rs
 [libtelnet]: https://github.com/seanmiddleditch/libtelne
 [Blightmud]: https://github.com/blightmud/blightmud
-[new-parser]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.new
-[receive]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.receive
-[telnet events]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/events/enum.TelnetEvents.html
-[send-text]: https://docs.rs/libtelnet-rs/latest/libtelnet_rs/struct.Parser.html#method.send_text
+[new-parser]: https://docs.rs/libmudtelnet/latest/libmudtelnet/struct.Parser.html#method.new
+[receive]: https://docs.rs/libmudtelnet/latest/libmudtelnet/struct.Parser.html#method.receive
+[telnet events]: https://docs.rs/libmudtelnet/latest/libmudtelnet/events/enum.TelnetEvents.html
+[send-text]: https://docs.rs/libmudtelnet/latest/libmudtelnet/struct.Parser.html#method.send_text
 [envis10n]: https://github.com/envis10n/
 [Sean Middleditch]: https://github.com/seanmiddleditch/
