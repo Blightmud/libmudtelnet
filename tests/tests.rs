@@ -320,6 +320,26 @@ fn test_bad_subneg_dbuffer() {
 }
 
 #[test]
+fn test_subneg_dos() {
+  let mut instance: Parser = Parser::new();
+  instance.options.support_local(opt::GMCP);
+
+  // Receive the start of a supported subnegotiation
+  let mut events = instance.receive(&[cmd::IAC, cmd::SB, opt::GMCP]);
+  assert!(events.is_empty());
+
+  // Receive data forever, breaking only when an item is yielded. With the current code
+  // this will never happen: the parser will indefinitely buffer as much data as the peer
+  // sends, consuming all available memory.
+  loop {
+    events = instance.receive(&[0x01]);
+    if !events.is_empty() {
+      break;
+    }
+  }
+}
+
+#[test]
 fn test_into_bytes() {
   let bytes = libmudtelnet::events::TelnetIAC::new(cmd::IAC).to_bytes();
   assert!(!bytes.is_empty())
