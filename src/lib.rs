@@ -419,7 +419,7 @@ impl Parser {
           // Partial IAC sequence at end of buffer — preserve for next receive()
           self.buffer.put(buf.slice(cmd_begin..));
         }
-        _ => events.push(EventType::None(buf.slice(cmd_begin..))),
+        State::Normal => events.push(EventType::None(buf.slice(cmd_begin..))),
       }
     }
 
