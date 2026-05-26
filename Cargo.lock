@@ -36,7 +36,6 @@ dependencies = [
  "arbitrary",
  "bencher",
  "libmudtelnet",
- "libtelnet-rs",
  "rand",
 ]
 
@@ -75,14 +74,6 @@ dependencies = [
  "arbitrary",
  "bytes",
  "compat",
-]
-
-[[package]]
-name = "libtelnet-rs"
-version = "2.0.0"
-source = "git+https://github.com/cpu/libtelnet-rs?branch=cpu-libmudtelnet-compat#9e66f6336711503bd30fec1459c0087d1951b48e"
-dependencies = [
- "bytes",
 ]
 
 [[package]]
@@ -161,3 +152,8 @@ name = "wasi"
 version = "0.11.0+wasi-snapshot-preview1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9c8d87e72b64a3b4db28d11ce29237c246188f4f51057d65a7eab63b7987e423"
+
+[[patch.unused]]
+name = "libtelnet-rs"
+version = "2.0.0"
+source = "git+https://github.com/cpu/libtelnet-rs?branch=cpu-libmudtelnet-compat#9e66f6336711503bd30fec1459c0087d1951b48e"

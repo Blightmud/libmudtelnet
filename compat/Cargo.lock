@@ -36,7 +36,6 @@ dependencies = [
  "arbitrary",
  "bencher",
  "libmudtelnet",
- "libtelnet-rs",
  "rand",
 ]
 
@@ -73,15 +72,6 @@ name = "libmudtelnet"
 version = "2.0.1"
 dependencies = [
  "arbitrary",
- "bytes",
-]
-
-[[package]]
-name = "libtelnet-rs"
-version = "2.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b91f14f906b14bbd9c2a4c6a81d6f01b825438de64adb3b15c8fcc223de25a1"
-dependencies = [
  "bytes",
 ]
 
