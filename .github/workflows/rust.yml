@@ -9,7 +9,7 @@ jobs:
     name: Format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@nightly
         with:
@@ -46,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Install rust toolchain
         uses: dtolnay/rust-toolchain@nightly
       - name: cargo doc
@@ -58,7 +58,7 @@ jobs:
     name: Stable Rust
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - name: Install stable rust toolchain
       uses: dtolnay/rust-toolchain@stable
     - name: Build (default features)
@@ -74,7 +74,7 @@ jobs:
     name: Nightly Rust
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install nightly rust toolchain
         uses: dtolnay/rust-toolchain@nightly
       - name: Build (default features)
