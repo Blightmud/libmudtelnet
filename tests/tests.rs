@@ -232,6 +232,61 @@ fn test_subneg_utf8_content() {
   }
 }
 
+/// Regression test: a lone IAC byte at the end of a buffer must be held for
+/// the next receive() call.
+#[test]
+fn test_iac_split_at_buffer_boundary() {
+  let mut parser = Parser::new();
+  parser.options.support_local(opt::GMCP);
+  parser._will(opt::GMCP);
+
+  // First buffer ends with IAC (0xFF) — the SB+GMCP bytes arrive in the next buffer.
+  let buf1 = b"some text\xFF";
+  let buf2 = [
+    &[cmd::SB, opt::GMCP][..],
+    b"Char.Status {}",
+    &[cmd::IAC, cmd::SE][..],
+  ]
+  .concat();
+
+  let events1 = parser.receive(buf1);
+  assert_eq!(
+    handle_events(events1),
+    events![Event::Recv],
+    "only the text should be emitted; the lone IAC must be held"
+  );
+
+  let events2 = parser.receive(&buf2);
+  assert_eq!(
+    handle_events(events2),
+    events![Event::Subnegotiation],
+    "the GMCP subneg must be emitted, not leaked as data"
+  );
+}
+
+/// Regression test: IAC + negotiation command at the end of a buffer (without
+/// the option byte) must be held for the next receive() call.
+#[test]
+fn test_negotiation_split_at_buffer_boundary() {
+  let mut parser = Parser::new();
+  parser.options.support_remote(opt::GMCP);
+
+  // First buffer ends with IAC WILL — the option byte arrives in the next buffer.
+  let events1 = parser.receive(&[cmd::IAC, cmd::WILL]);
+  assert_eq!(
+    handle_events(events1),
+    events![],
+    "no event should fire until the option byte arrives"
+  );
+
+  let events2 = parser.receive(&[opt::GMCP]);
+  assert_eq!(
+    handle_events(events2),
+    events![Event::Send, Event::Negotiation],
+    "IAC DO GMCP + Negotiation event expected once option byte arrives"
+  );
+}
+
 /// Test escaping IAC bytes in a buffer.
 #[test]
 fn test_escape() {

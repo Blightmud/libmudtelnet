@@ -415,6 +415,10 @@ impl Parser {
         State::Sub | State::SubOpt { .. } | State::SubIac { .. } => {
           events.push(EventType::SubNegotiation(buf.slice(cmd_begin..), None));
         }
+        State::Iac | State::Neg => {
+          // Partial IAC sequence at end of buffer — preserve for next receive()
+          self.buffer.put(buf.slice(cmd_begin..));
+        }
         _ => events.push(EventType::None(buf.slice(cmd_begin..))),
       }
     }
