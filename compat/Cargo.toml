@@ -8,7 +8,7 @@ edition = "2021"
 arbitrary = { version = "1", optional = true, features = ["derive"] }
 libmudtelnet = { path = "..", features = ["arbitrary"] }
 bencher = "0.1.5"
-rand = "0.8.5"
+rand = "0.8.6"
 
 [[bench]]
 name = "benchmarks"
